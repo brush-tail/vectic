@@ -40,15 +40,32 @@ _htmlBoiler += '</span>';
 
 
 function vectic(params) {
+  var _this = this;
 
   // Define
   params = params || {};
   this.targetObject = params.target;
   this.vecticID = params.vecticID;
   this.firebaseLib = undefined;
+  this.vecticRef = undefined;
+
+  // Get Firebase if available
   if(typeof Firebase != 'undefined') {
     this.firebaseLib = Firebase;
   }
+
+  Object.defineProperty(this, 'pathBase', {
+    get: function() {return 'http://vecticdev.firebaseio.com/';},
+  });
+  Object.defineProperty(this, 'pathVectic', {
+    get: function() {return this.pathBase+'vectic/';},
+  });
+  Object.defineProperty(this, 'pathTemplate', {
+    get: function() {return this.pathBase+'template/';},
+  });
+  Object.defineProperty(this, 'pathPalette', {
+    get: function() {return this.pathBase+'palette/';},
+  });
 
   if(!this.targetObject) {return console.error('vectic(): missing target jQuery object');}
   if(!this.vecticID) {return console.error('vectic(): missing vecticID');}
@@ -68,10 +85,62 @@ function vectic(params) {
     this.targetObject.html(_htmlBoiler);
   };
 
+  this.getObjectsRef = function() {
+    if(!this.vecticRef) {return console.error('vectic.getObjectsRef: Could not find vecticRef');}
+    return this.vecticRef.child('objects');
+  };
+  this.getTemplatesRef = function() {
+    if(!this.vecticRef) {return console.error('vectic.getTemplatesRef: Could not find vecticRef');}
+    return this.vecticRef.child('templates');
+  };
+  this.getPalettesRef = function() {
+    if(!this.vecticRef) {return console.error('vectic.getPalettesRef: Could not find vecticRef');}
+    return this.vecticRef.child('palettes');
+  };
+
   this.initFirebase = function() {
-    if(!this.firebaseLib) {return console.error('vectic: Missing Firbase library');}
-    this.vecticRef = new this.firebaseLib();
+    if(!this.firebaseLib) {return console.error('vectic: Missing Firebase library');}
+    if(!this.vecticID) {return console.error('vectic: Missing vecticID');}
+    this.vecticRef = new this.firebaseLib(_this.pathVectic+this.vecticID);
+    this.vecticObjectsRef = this.getObjectsRef();
+    this.vecticTemplatesRef = this.getTemplatesRef();
+    this.vecticPalettesRef = this.getPalettesRef();
+    this.setVecticHooks();
+  };
+
+  this.setVecticHooks = function() {
+    if(!this.vecticRef) {return console.error('vectic: Could not create hooks, not connected to Database');}
+
+    this.vecticObjectsRef.off('child_added', this.addObject, this.refError);
+    this.vecticTemplatesRef.off('child_added', this.addTemplate, this.refError);
+    this.vecticPalettesRef.off('child_added', this.addPalette, this.refError);
+
+    this.vecticObjectsRef.on('child_added', this.addObject, this.refError);
+    this.vecticTemplatesRef.on('child_added', this.addTemplate, this.refError);
+    this.vecticPalettesRef.on('child_added', this.addPalette, this.refError);
+  };
+
+  this.addObject = function(fbRef, prevKey) {
+    var key = fbRef.key();
+    var data = fbRef.val();
+    // TODO:
+  };
+
+  this.addTemplate = function(fbRef, prevKey) {
+    var key = fbRef.key();
+    var data = fbRef.val();
+    // TODO:
+  };
+
+  this.addPalette = function(fbRef, prevKey) {
+    var key = fbRef.key();
+    var data = fbRef.val();
+    // TODO:
   };
 
   // TODO:
+
+  this.refError = function() {
+    // TODO: hanle Firebase reference hook errors
+  };
 }
