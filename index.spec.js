@@ -64,15 +64,15 @@ describe('vectic()', function () {
 
   // Initiation Tests
   it('should generate uid', function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
     expect(vecticObj.rootID).toEqual('vvectic1_id1');
   });
   it('should generate new unique uid for each new vectic', function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
     expect(vecticObj.rootID).toEqual('vvectic1_id2');
   });
   it('should exit and fail if target is missing', function() {
-    vecticObj  = new vectic({
+    vecticObj = new vectic({
       vecticID: 'vectic1',
     });
     expect(vecticObj.rootID).toEqual(undefined);
@@ -86,19 +86,19 @@ describe('vectic()', function () {
 
   // Preset values
   it('pathBase should be Expected URL', function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
     expect(vecticObj.pathBase).toEqual('http://vecticdev.firebaseio.com/');
   });
   it('pathVectic should be Expected URL', function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
     expect(vecticObj.pathVectic).toEqual('http://vecticdev.firebaseio.com/vectic/');
   });
   it('pathTemplate should be Expected URL', function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
     expect(vecticObj.pathTemplate).toEqual('http://vecticdev.firebaseio.com/template/');
   });
   it('pathPalette should be Expected URL', function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
     expect(vecticObj.pathPalette).toEqual('http://vecticdev.firebaseio.com/palette/');
   });
 
@@ -281,7 +281,7 @@ describe('vectic()', function () {
   
   // Init vectic
   beforeEach(function() {
-    vecticObj  = new vectic(vecticParamsMock);
+    vecticObj = new vectic(vecticParamsMock);
   });*/
 
   
