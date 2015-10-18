@@ -1,0 +1,28 @@
+{
+  "name": "vectic",
+  "main": "index.min.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/brush-tail/vectic",
+  "authors": [
+    "zeus3rd@gmail.com"
+  ],
+  "description": "Vectic image renderer",
+  "moduleType": [],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "index.js",
+    "index.spec.js",
+    "LICENSE",
+    "package.json",
+    ".gitignore",
+    "Gruntfile.js"
+  ],
+  "dependencies": {
+    "firebase": "~2.3.1"
+  }
+}
