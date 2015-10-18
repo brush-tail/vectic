@@ -4,7 +4,7 @@
   "description": "Vectic javascript plugin for websites",
   "main": "index.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt karma:min"
   },
   "repository": {
     "type": "git",

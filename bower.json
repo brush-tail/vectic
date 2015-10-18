@@ -16,11 +16,7 @@
     "test",
     "tests",
     "index.js",
-    "index.spec.js",
-    "LICENSE",
-    "package.json",
-    ".gitignore",
-    "Gruntfile.js"
+    "index.spec.js"
   ],
   "dependencies": {
     "firebase": "~2.3.1"
