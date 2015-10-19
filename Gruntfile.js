@@ -40,12 +40,14 @@ module.exports = function (grunt) {
       },
       unit: {
         files: [
+          {src:'bower_components/jquery/dist/jquery.min.js'},
           {src:'index.js'},
           {src:'*.spec.js'},
         ],
       },
       min: {
         files: [
+          {src:'bower_components/jquery/dist/jquery.min.js'},
           {src:'index.min.js'},
           {src:'*.spec.js'},
         ],

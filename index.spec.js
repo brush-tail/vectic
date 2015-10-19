@@ -1,31 +1,32 @@
 'use strict';
 
 // Copy of _htmlBoiler from index.js, ensures typos are not added
-var _htmlBoiler = '';
-_htmlBoiler += '<span class="svgContainer">';
-_htmlBoiler += '  <svg version="1.1" xmlns="http://www.w3.org/2000/svg">';
-_htmlBoiler += '    <defs id="palettes"></defs>';
-_htmlBoiler += '    <defs id="templates"></defs>';
-_htmlBoiler += '    <g id="objects">';
-_htmlBoiler += '      <!-- todo: test place holder -->';
-_htmlBoiler += '      <use id="oobject1" xlink:href="#ttemplatelistitem1" x="5" y="5" width="10" height="20"/>';
-_htmlBoiler += '    </g>';
-_htmlBoiler += '  </svg>';
+var _htmlBoilerMock = '';
+_htmlBoilerMock += '<span class="svgContainer">';
+_htmlBoilerMock += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="{{ROOTID}}">';
+_htmlBoilerMock += '<defs id="palettes"></defs>';
+_htmlBoilerMock += '<defs id="templates"></defs>';
+_htmlBoilerMock += '<g id="objects"></g>';
+_htmlBoilerMock += '</svg>';
 
-_htmlBoiler += '  <style>';
-_htmlBoiler += '    .svgContainer {';
-_htmlBoiler += '      -webkit-touch-callout: none !important;';
-_htmlBoiler += '      -webkit-user-select: none !important;';
-_htmlBoiler += '      -khtml-user-select: none !important;';
-_htmlBoiler += '      -moz-user-select: none !important;';
-_htmlBoiler += '      -ms-user-select: none !important;';
-_htmlBoiler += '      user-select: none !important;';
-_htmlBoiler += '    }';
-_htmlBoiler += '    .svgContainer svg:not([width]) {';
-_htmlBoiler += '      width: 100% !important;';
-_htmlBoiler += '    }';
-_htmlBoiler += '  </style>';
-_htmlBoiler += '</span>';
+_htmlBoilerMock += '<style>';
+_htmlBoilerMock += '.svgContainer {';
+_htmlBoilerMock += '-webkit-touch-callout: none !important;';
+_htmlBoilerMock += '-webkit-user-select: none !important;';
+_htmlBoilerMock += '-khtml-user-select: none !important;';
+_htmlBoilerMock += '-moz-user-select: none !important;';
+_htmlBoilerMock += '-ms-user-select: none !important;';
+_htmlBoilerMock += 'user-select: none !important;';
+_htmlBoilerMock += '}';
+_htmlBoilerMock += '.svgContainer svg:not([width]) {';
+_htmlBoilerMock += 'width: 100% !important;';
+_htmlBoilerMock += '}';
+_htmlBoilerMock += '</style>';
+_htmlBoilerMock += '</span>';
+
+function outerhtml(jqObj) {
+  return $('<div>').append(jqObj.clone()).html();
+}
 
 describe('vectic()', function () {
   var vecticObj, vecticTargetMock, vecticParamsMock, firebaseLibMock, firebaseLibMockObj;
@@ -108,6 +109,7 @@ describe('vectic()', function () {
       vecticObj = new vectic(vecticParamsMock);
       vecticObj.firebaseLib = firebaseLibMock;
       spyOn(vecticObj, 'initHTML');
+      spyOn(vecticObj, 'getDoms');
       spyOn(vecticObj, 'initFirebase');
       spyOn(vecticObj, 'firebaseLib');
       spyOn(vecticObj, 'setVecticHooks');
@@ -123,12 +125,16 @@ describe('vectic()', function () {
     });
 
     describe('init()', function() {
-      it('should trigger initHTML()', function() {
+      beforeEach(function() {
         vecticObj.init();
+      });
+      it('should trigger initHTML()', function() {
         expect(vecticObj.initHTML).toHaveBeenCalled();
       });
+      it('should trigger getDoms()', function() {
+        expect(vecticObj.getDoms).toHaveBeenCalled();
+      });
       it('should trigger initFirebase()', function() {
-        vecticObj.init();
         expect(vecticObj.initFirebase).toHaveBeenCalled();
       });
     });
@@ -136,35 +142,46 @@ describe('vectic()', function () {
     describe('initHTML()', function() {
       it('should populate html boiler content on target', function() {
         vecticObj.initHTML.and.callThrough();
+        vecticObj.rootID = 'xxxx';
         vecticObj.initHTML();
-        expect(vecticTargetMock.html).toHaveBeenCalledWith(_htmlBoiler);
+        expect(vecticTargetMock.html).toHaveBeenCalledWith(_htmlBoilerMock.replace('{{ROOTID}}', 'xxxx'));
       });
     });
 
+    xdescribe('getDoms()', function() {
+      beforeEach(function() {
+        vecticObj = new vectic(vecticParamsMock);
+        vecticObj.rootID = 'test1';
+      });
+      it('should get container DOM Objects', function() {
+        // TODO: Doesn't currently work, htmls is not rendered correctly to being with
+        vecticObj.initHTML();
+        vecticObj.getDoms();
+        expect(typeof vecticObj.objectContainerDom).toEqual('object');;
+        expect(typeof vecticObj.templateContainerDom).toEqual('object');;
+        expect(typeof vecticObj.paletteContainerDom).toEqual('object');;
+      });
+      // TODO: Write tests to make sure DOM objects are selected correctly if possible
+    });
+
     describe('initFirebase()', function() {
-      it('should populate html boiler content on target', function() {
+      beforeEach(function() {
         vecticObj.initFirebase.and.callThrough();
         vecticObj.firebaseLib.and.returnValue(firebaseLibMockObj);
         vecticObj.initFirebase();
+      });
+      it('should populate html boiler content on target', function() {
         expect(vecticObj.firebaseLib).toHaveBeenCalledWith('http://vecticdev.firebaseio.com/vectic/vectic1');
       });
       it('should store Firebase reference on vecticRef', function() {
-        vecticObj.initFirebase.and.callThrough();
-        vecticObj.firebaseLib.and.returnValue(firebaseLibMockObj);
-        vecticObj.initFirebase();
         expect(vecticObj.vecticRef).toEqual(firebaseLibMockObj);
       });
       it('should store FB Vectic Objects reference on vecticObjectsRef', function() {
-        vecticObj.initFirebase.and.callThrough();
-        vecticObj.firebaseLib.and.returnValue(firebaseLibMockObj);
-        vecticObj.initFirebase();
         expect(vecticObj.getObjectsRef).toHaveBeenCalled();
         expect(vecticObj.getTemplatesRef).toHaveBeenCalled();
         expect(vecticObj.getPalettesRef).toHaveBeenCalled();
       });
       it('should trigger setVecticHooks', function() {
-        vecticObj.initFirebase.and.callThrough();
-        vecticObj.initFirebase();
         expect(vecticObj.setVecticHooks).toHaveBeenCalled;
       });
     });
@@ -228,51 +245,123 @@ describe('vectic()', function () {
     });
 
     describe('addObject()', function() {
-      it('should fetch key() from Firebase object', function() {
-        var fbMock = {key: function() {}, val: function() {}};
-        spyOn(fbMock, 'key');
+      var jqueryMockObj = {
+        setAttributeNS: function() {},
+      };
+      var newObjectDomMock = {
+        get: function() {
+          return jqueryMockObj
+        },
+      };
+      var fbData = {
+        template: 'template1',
+        x: '1',
+        y: '2',
+        width: '3',
+        height: '4',
+      };
+      var fbMock = {key: function() {return 'key1'}, val: function() {return fbData},};
+      var objectContainerDomMock = {append:function() {},};
+      beforeEach(function() {
+        vecticObj = new vectic(vecticParamsMock);
+        spyOn(fbMock, 'key').and.callThrough();
+        spyOn(fbMock, 'val').and.callThrough();
+        spyOn(objectContainerDomMock, 'append');
+        spyOn(vecticObj, 'setObjectAttributes');
+        spyOn(vecticObj, 'newObjectDom').and.returnValue(newObjectDomMock);
+      });
+      it('should fetch key() and val() from Firebase object', function() {
         vecticObj.addObject(fbMock);
         expect(fbMock.key).toHaveBeenCalled();
-      });
-      it('should fetch val() from Firebase object', function() {
-        var fbMock = {key: function() {}, val: function() {}};
-        spyOn(fbMock, 'val');
-        vecticObj.addObject(fbMock);
         expect(fbMock.val).toHaveBeenCalled();
       });
-      // TODO:
+      it('should get DOM Object from newObjectDom()', function() {
+        vecticObj.addObject(fbMock);
+        expect(vecticObj.newObjectDom).toHaveBeenCalledWith('key1');
+      });
+      xit('should append newObjectDom() content to objectContainerDom via jquery', function() {
+        // TODO: Disabled as this object is wrapped in jquery getter
+        vecticObj.objectContainerDom = objectContainerDomMock;
+        vecticObj.addObject(fbMock);
+        expect(objectContainerDomMock.append).toHaveBeenCalledWith(newObjectDomMock);
+      });
+      it('should run setObjectAttributes() with supplied data', function() {
+        vecticObj.addObject(fbMock);
+        expect(vecticObj.setObjectAttributes).toHaveBeenCalledWith(jqueryMockObj, fbData);
+      });
     });
+    describe('setObjectAttributes()', function() {
+      var objectDomMock = {
+        setAttributeNS: function() {},
+      };
+      var dataMock = {
+        template: 'template1',
+        x: '1',
+        y: '2',
+        width: '3',
+        height: '4',
+      };
+      beforeEach(function() {
+        vecticObj = new vectic(vecticParamsMock);
+        spyOn(objectDomMock, 'setAttributeNS');
+      });
+      it('should setAttributeNS() for each expected attribute', function() {
+        vecticObj.setObjectAttributes(objectDomMock, dataMock);
+        expect(objectDomMock.setAttributeNS).toHaveBeenCalledWith('xlink','xlink:href','#template1');
+        expect(objectDomMock.setAttributeNS).toHaveBeenCalledWith(null,'x','1');
+        expect(objectDomMock.setAttributeNS).toHaveBeenCalledWith(null,'y','2');
+        expect(objectDomMock.setAttributeNS).toHaveBeenCalledWith(null,'width','3');
+        expect(objectDomMock.setAttributeNS).toHaveBeenCalledWith(null,'height','4');
+      });
+    });
+    describe('newObjectDom()', function() {
+      it('should return a <use> element', function() {
+        expect(outerhtml(vecticObj.newObjectDom('key1'))).toEqual('<use id="key1"></use>');;
+      });
+    });
+
+
     describe('addTemplate()', function() {
-      it('should fetch key() from Firebase object', function() {
-        var fbMock = {key: function() {}, val: function() {}};
-        spyOn(fbMock, 'key');
+      var fbMock = {key: function() {return 'key1'}, val: function() {return 'val1'}};
+      beforeEach(function() {
+        spyOn(fbMock, 'key').and.callThrough();
+        spyOn(fbMock, 'val').and.callThrough();
+      });
+      it('should fetch key() and val() from Firebase object', function() {
         vecticObj.addTemplate(fbMock);
         expect(fbMock.key).toHaveBeenCalled();
-      });
-      it('should fetch val() from Firebase object', function() {
-        var fbMock = {key: function() {}, val: function() {}};
-        spyOn(fbMock, 'val');
-        vecticObj.addObject(fbMock);
         expect(fbMock.val).toHaveBeenCalled();
       });
       // TODO:
     });
+    xdescribe('newTemplateDom()', function() {
+      it('needs a test', function() {
+        expect(false).toEqual(true);
+        // TODO:
+      });
+    });
+
+
     describe('addPalette()', function() {
-      it('should fetch key() from Firebase object', function() {
-        var fbMock = {key: function() {}, val: function() {}};
-        spyOn(fbMock, 'key');
+      var fbMock = {key: function() {return 'key1'}, val: function() {return 'val1'}};
+      beforeEach(function() {
+        spyOn(fbMock, 'key').and.callThrough();
+        spyOn(fbMock, 'val').and.callThrough();
+      });
+      it('should fetch key() and val() from Firebase object', function() {
         vecticObj.addPalette(fbMock);
         expect(fbMock.key).toHaveBeenCalled();
-      });
-      it('should fetch val() from Firebase object', function() {
-        var fbMock = {key: function() {}, val: function() {}};
-        spyOn(fbMock, 'val');
-        vecticObj.addObject(fbMock);
         expect(fbMock.val).toHaveBeenCalled();
       });
       // TODO:
     });
   });
+    xdescribe('newPaletteDom()', function() {
+      it('needs a test', function() {
+        expect(false).toEqual(true);
+        // TODO:
+      });
+    });
 
   
 

@@ -10,10 +10,11 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
 
     // list of files / patterns to load in the browser
-    files: [
-      'index.min.js',
-      '*.spec.js'
-    ],
+    // files: [
+    //   'bower_components/jquery/dist/jquery.min.js',
+    //   'index.min.js',
+    //   '*.spec.js'
+    // ],
 
     preprocessors: {
       // '**/*.jade': 'ng-jade2js',
