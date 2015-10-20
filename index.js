@@ -60,7 +60,7 @@ function _vectic_template(params) {
   if(typeof Firebase != 'undefined') {
     this.firebaseLib = Firebase;
   } else {
-    console.error('vectic(): could not find Firebase library');
+    console.error('_vectic_template(): could not find Firebase library');
   }
 
   this.onValue = function(snapshot, prevChildKey) {
@@ -112,7 +112,6 @@ function _vectic_template(params) {
     _this.target.html(sOutput);
   };
 
-  console.log(this.path+this.id)
   this.templateDef = new this.firebaseLib(this.path+this.id);
   // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
   // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
@@ -126,8 +125,55 @@ function _vectic_template(params) {
   };
 }
 
-function vectic_palette(params) {
-  // TODO
+function _vectic_palette(params) {
+  var _this = this;
+  this.refError = _refError;
+  params = params || {};
+  this.id = params.id || null;
+  this.vecticid = params.vecticid || null;
+  this.target = params.target || null;
+  this.path = params.path || null;
+
+  if(!this.id)           { return console.error('vectic_palette(): No ID supplied'); }
+  if(!this.vecticid)     { return console.error('vectic_palette(): No Vectic ID supplied'); }
+  if(!this.target)       { return console.error('vectic_palette(): No Target template element supplied'); }
+  if(!this.path)     { return console.error('vectic_palette(): No path supplied'); }
+  if(this.target && !this.target.html)  { return console.error('vectic_palette(): Target is not correct JQuery DOM object'); }
+
+  // Get Firebase if available
+  if(typeof Firebase != 'undefined') {
+    this.firebaseLib = Firebase;
+  } else {
+    console.error('_vectic_palette(): could not find Firebase library');
+  }
+
+  this.paletteDef = new this.firebaseLib(this.path+this.id);
+  // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
+  // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
+  // this.details = $firebaseObject(this.detailsDef);
+  
+  // this.paletteDef.once('value', this.onValue);
+  this.paletteDef.on('value', this.onValue, this.refError);
+
+  this.onValue = function(snapshot, prevChildKey) {
+    var val = snapshot.val();
+    if(!val && val.colors) {return;}
+
+    var sOutput = '';
+    for(var key in val.colors) {
+      var value = val.colors[key];
+      
+      sOutput += '.p'+_this.id+' .c'+key+' {';
+      if(value.fill != undefined) {sOutput+='fill:'+value.fill+';';}
+      if(value.stroke != undefined) {sOutput+='stroke:'+value.stroke+';';}
+      if(value['stroke-width'] != undefined) {sOutput+='stroke-width:'+value['stroke-width']+';';}
+      sOutput += '} ';
+    }
+
+    _this.target.html(sOutput);
+  };
+
+  this.destroy = function() {};
 }
 
 
@@ -293,13 +339,22 @@ function vectic(params) {
   };
 
   // Palette hook handlers
+  this.initPalette = _vectic_palette;      // Set as pointer for easy test mocking
   this.addPalette = function(fbRef, prevKey) {
     var key = fbRef.key();
     var data = fbRef.val();
-    // TODO:
-    // _this.palettes[key] = data;
-    // _this.paletteContainerDom
+
+    var paletteid = data.palette;
     var paletteDom = _this.newPaletteDom(key);
+    if(_this.paletteContainerDom) {$(_this.paletteContainerDom).append(paletteDom);}
+
+    if(_this.vecticPaletteHandlers[key]) {_this.vecticPaletteHandlers[key].destroy();}
+    _this.vecticPaletteHandlers[key] = new _this.initPalette({
+      id: paletteid,
+      vecticid: _this.vecticID,
+      target: paletteDom,
+      path: _this.pathPalette,
+    });
   };
 
   this.newPaletteDom = function(key) {

@@ -431,3 +431,10 @@ xdescribe('vectic_template()', function() {
     expect(false).toEqual(true);
   });
 });
+
+xdescribe('vectic_palette()', function() {
+  // TODO:
+  it('needs tests written', function() {
+    expect(false).toEqual(true);
+  });
+});
