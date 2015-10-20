@@ -112,6 +112,10 @@ function _vectic_template(params) {
     _this.target.html(sOutput);
   };
 
+  this.destroy = function() {
+    // TODO: Disconnect from database, remove watchers, destory what we can
+  };
+
   this.templateDef = new this.firebaseLib(this.path+this.id);
   // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
   // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
@@ -119,10 +123,6 @@ function _vectic_template(params) {
   
   // this.templateDef.once('value', this.onValue);
   this.templateDef.on('value', this.onValue, this.refError);
-
-  this.destroy = function() {
-    // TODO: Disconnect from database, remove watchers, destory what we can
-  };
 }
 
 function _vectic_palette(params) {
@@ -134,11 +134,12 @@ function _vectic_palette(params) {
   this.target = params.target || null;
   this.path = params.path || null;
 
-  if(!this.id)           { return console.error('vectic_palette(): No ID supplied'); }
-  if(!this.vecticid)     { return console.error('vectic_palette(): No Vectic ID supplied'); }
-  if(!this.target)       { return console.error('vectic_palette(): No Target template element supplied'); }
-  if(!this.path)     { return console.error('vectic_palette(): No path supplied'); }
-  if(this.target && !this.target.html)  { return console.error('vectic_palette(): Target is not correct JQuery DOM object'); }
+  if(!this.id)            { return console.error('vectic_palette(): No ID supplied'); }
+  if(!this.vecticid)      { return console.error('vectic_palette(): No Vectic ID supplied'); }
+  if(!this.target)        { return console.error('vectic_palette(): No Target palette element supplied'); }
+  if(!this.path)          { return console.error('vectic_palette(): No path supplied'); }
+  if(this.target && 
+    !this.target.html)    { return console.error('vectic_palette(): Target is not correct JQuery DOM object'); }
 
   // Get Firebase if available
   if(typeof Firebase != 'undefined') {
@@ -147,15 +148,8 @@ function _vectic_palette(params) {
     console.error('_vectic_palette(): could not find Firebase library');
   }
 
-  this.paletteDef = new this.firebaseLib(this.path+this.id);
-  // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
-  // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
-  // this.details = $firebaseObject(this.detailsDef);
-  
-  // this.paletteDef.once('value', this.onValue);
-  this.paletteDef.on('value', this.onValue, this.refError);
-
   this.onValue = function(snapshot, prevChildKey) {
+
     var val = snapshot.val();
     if(!val && val.colors) {return;}
 
@@ -174,6 +168,14 @@ function _vectic_palette(params) {
   };
 
   this.destroy = function() {};
+
+  this.paletteDef = new this.firebaseLib(this.path+this.id);
+  // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
+  // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
+  // this.details = $firebaseObject(this.detailsDef);
+  
+  // this.paletteDef.once('value', this.onValue);
+  this.paletteDef.on('value', this.onValue, this.refError);
 }
 
 
