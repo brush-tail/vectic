@@ -2,11 +2,6 @@
 
 module.exports = function (grunt) {
 
-  // grunt.loadNpmTasks([
-  //   'grunt-karma',
-  //   'grunt-contrib-uglify',
-  // ]);
-
   require('jit-grunt')(grunt, {
     uglify: 'grunt-contrib-uglify',
     karma: 'grunt-karma',

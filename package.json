@@ -2,7 +2,7 @@
   "name": "vectic",
   "version": "1.0.0",
   "description": "Vectic javascript plugin for websites",
-  "main": "index.js",
+  "main": "index.min.js",
   "scripts": {
     "test": "grunt karma:min"
   },
