@@ -46,12 +46,12 @@ function _vectic_template(params) {
   this.refError = _refError;
   params = params || {};
   this.id = params.id || null;
-  this.vecticid = params.vecticid || null;
+  // this.vecticid = params.vecticid || null;
   this.target = params.target || null;
   this.path = params.path || null;
 
   if(!this.id)           { return console.error('vectic_template(): No ID supplied'); }
-  if(!this.vecticid)     { return console.error('vectic_template(): No Vectic ID supplied'); }
+  // if(!this.vecticid)     { return console.error('vectic_template(): No Vectic ID supplied'); }
   if(!this.target)       { return console.error('vectic_template(): No Target template element supplied'); }
   if(!this.path)     { return console.error('vectic_template(): No path supplied'); }
   if(this.target && !this.target.html)  { return console.error('vectic_template(): Target is not correct JQuery DOM object'); }
@@ -67,10 +67,10 @@ function _vectic_template(params) {
     var val = snapshot.val();
     var elementKey = snapshot.key();
 
-    if(!(val && val.width && val.height && val.elements)) {return console.error('template '+elementKey+' incomplete');}
+    if(!(val && val.settings && val.settings.width && val.settings.height && val.elements)) {return console.error('template '+elementKey+' incomplete');}
 
     // Set viewBox
-    var viewBox = '0 0 '+val.width+' '+val.height;
+    var viewBox = '0 0 '+val.settings.width+' '+val.settings.height;
     _this.target.get(0).setAttributeNS(null, 'viewBox', viewBox);
 
     // Set palette
@@ -130,12 +130,12 @@ function _vectic_palette(params) {
   this.refError = _refError;
   params = params || {};
   this.id = params.id || null;
-  this.vecticid = params.vecticid || null;
+  // this.vecticid = params.vecticid || null;
   this.target = params.target || null;
   this.path = params.path || null;
 
   if(!this.id)            { return console.error('vectic_palette(): No ID supplied'); }
-  if(!this.vecticid)      { return console.error('vectic_palette(): No Vectic ID supplied'); }
+  // if(!this.vecticid)      { return console.error('vectic_palette(): No Vectic ID supplied'); }
   if(!this.target)        { return console.error('vectic_palette(): No Target palette element supplied'); }
   if(!this.path)          { return console.error('vectic_palette(): No path supplied'); }
   if(this.target && 
@@ -187,8 +187,10 @@ function vectic(params) {
   this.targetObject = params.target;
   this.targetObjectSvg = null;
   this.vecticID = params.vecticID;
+  this.templateID = params.templateID;
   this.firebaseLib = undefined;
   this.vecticRef = undefined;
+  this.templateRef = undefined;
 
   this.objects = {};
   this.templates = {};
@@ -221,17 +223,35 @@ function vectic(params) {
     get: function() {return this.pathBase+'palette/';},
   });
 
+  console.log(params)
+
   if(!(this.targetObject && this.targetObject.html)) {return console.error('vectic(): missing target jQuery object');}
-  if(!this.vecticID) {return console.error('vectic(): missing vecticID');}
+  if(!(this.vecticID || this.templateID)) {return console.error('vectic(): missing vecticID or templateID');}
 
   // Generate unique ID to distinguish each vectic object within interface
-  this.rootID = 'v'+this.vecticID+'_id'+(_vecticUID+=1);
+  this.rootID = 'v'+(this.vecticID||this.templateID)+'_id'+(_vecticUID+=1);
 
   // init() is triggered separately so jasmine tests can watch internal functions for testing purposes
   this.init = function() {
+    if(!_this.firebaseLib) {return console.error('vectic.init(): Missing Firebase library');}
+
     _this.initHTML();
     _this.getDoms();
-    _this.initFirebase();
+
+    if(_this.vecticID) {
+      _this.vecticRef = new _this.firebaseLib(_this.pathVectic+_this.vecticID);
+      _this.vecticObjectsRef = _this.getObjectsRef();
+      _this.vecticTemplatesRef = _this.getTemplatesRef();
+      _this.vecticPalettesRef = _this.getPalettesRef();
+      _this.setVecticHooks();
+    }
+    else if(_this.templateID) {
+      _this.templateRef = new _this.firebaseLib(_this.pathTemplate+_this.templateID);
+      _this.setTemplateHooks();
+    }
+    else {
+      return console.error('vectic: Missing vecticID or templateID');
+    }
   };
 
   // Sets internal static HTML
@@ -260,16 +280,6 @@ function vectic(params) {
     return _this.vecticRef.child('palettes');
   };
 
-  this.initFirebase = function() {
-    if(!_this.firebaseLib) {return console.error('vectic: Missing Firebase library');}
-    if(!_this.vecticID) {return console.error('vectic: Missing vecticID');}
-    _this.vecticRef = new _this.firebaseLib(_this.pathVectic+_this.vecticID);
-    _this.vecticObjectsRef = _this.getObjectsRef();
-    _this.vecticTemplatesRef = _this.getTemplatesRef();
-    _this.vecticPalettesRef = _this.getPalettesRef();
-    _this.setVecticHooks();
-  };
-
   this.setVecticHooks = function() {
     if(!_this.vecticRef) {return console.error('vectic: Could not create hooks, not connected to Database');}
 
@@ -285,6 +295,28 @@ function vectic(params) {
     _this.vecticRef.child('settings').on('value', _this.settingsChange, _this.refError);
   };
 
+  this.setTemplateHooks = function() {
+    if(!_this.templateRef) {return console.error('vectic: Could not create hooks, not connected to Database');}
+
+    // Add dummy object to automatically "use" template
+    _this.addObject({
+      key: function() { return 'reference'; },
+      val: function() { return {
+        template: _this.templateID,
+        x: '0',
+        y: '0',
+        width: '0',
+        height: '0',
+      }; },
+    });
+
+    _this.templateRef.child('settings').off('value', _this.templateSettingsChange, _this.refError);
+    _this.templateRef.child('settings').on('value', _this.templateSettingsChange, _this.refError);
+
+    // _this.templateRef.child('elements').off('value', _this.templateElementsChange, _this.refError);
+    _this.templateRef.child('elements').once('value', _this.templateElementsChange, _this.refError);
+  };
+
   // Settings hook handlers
   this.settingsChange = function(snapshot) {
     var val = snapshot.val();
@@ -292,6 +324,20 @@ function vectic(params) {
 
     var viewBox = '0 0 '+val.width+' '+val.height;
     _this.targetObjectSvg.setAttributeNS(null, 'viewBox', viewBox);
+  };
+
+  this.templateSettingsChange = function(snapshot) {
+    var val = snapshot.val();
+    if(!(val && val.width && val.height)) {return console.error('vectic templateSettingsChange: missing width/height');}
+
+    var viewBox = '0 0 '+val.width+' '+val.height;
+    _this.targetObjectSvg.setAttributeNS(null, 'viewBox', viewBox);
+
+    // reference
+    console.log('test')
+    console.log($('svg#'+_this.rootID+' g#objects use#reference').attr('width'));
+    $('svg#'+_this.rootID+' g#objects use#reference').get(0).setAttributeNS(null, 'width', val.width);
+    $('svg#'+_this.rootID+' g#objects use#reference').get(0).setAttributeNS(null, 'height', val.height);
   };
 
   // Object hook handlers
@@ -339,6 +385,22 @@ function vectic(params) {
   this.newTemplateDom = function(key) {
     return $('<svg id="t'+key+'"></svg>');
   };
+
+  this.templateElementsChange = function(fbRef, prevKey) {
+    var key = fbRef.key();
+    var data = fbRef.val();
+
+    var templateDom = _this.newTemplateDom(_this.templateID);
+    if(_this.templateContainerDom) {$(_this.templateContainerDom).append(templateDom);}
+
+    if(_this.vecticTemplateHandlers[key]) {_this.vecticTemplateHandlers[key].destroy();}
+    _this.vecticTemplateHandlers[_this.templateID] = new _this.initTemplate({
+      id: _this.templateID,
+      // vecticid: _this.templateID,
+      target: templateDom,
+      path: _this.pathTemplate,
+    });
+  }
 
   // Palette hook handlers
   this.initPalette = _vectic_palette;      // Set as pointer for easy test mocking

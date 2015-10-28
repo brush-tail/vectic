@@ -29,7 +29,7 @@ function outerhtml(jqObj) {
 }
 
 describe('vectic()', function () {
-  var vecticObj, vecticTargetMock, vecticParamsMock, firebaseLibMock, firebaseLibMockObj;
+  var vecticObj, vecticTargetMock, vecticParamsMock, templateParamsMock, firebaseLibMock, firebaseLibMockObj;
 
   beforeEach(function() {
     // Reset variables for each test
@@ -45,8 +45,13 @@ describe('vectic()', function () {
       vecticID: 'vectic1',
     };
 
+    templateParamsMock = {
+      target: vecticTargetMock,
+      templateID: 'template1',
+    };
+
     firebaseLibMockObj = {
-      child: function() {},
+      child: function() {return firebaseLibMockObj;},
       off: function() {},
       on: function() {},
       once: function() {},
@@ -57,7 +62,7 @@ describe('vectic()', function () {
 
     // Global Spies
     spyOn(vecticTargetMock, 'html');
-    spyOn(firebaseLibMockObj, 'child');
+    spyOn(firebaseLibMockObj, 'child').and.callThrough();
     spyOn(firebaseLibMockObj, 'on');
     spyOn(firebaseLibMockObj, 'off');
     spyOn(firebaseLibMockObj, 'once');
@@ -110,9 +115,9 @@ describe('vectic()', function () {
       vecticObj.firebaseLib = firebaseLibMock;
       spyOn(vecticObj, 'initHTML');
       spyOn(vecticObj, 'getDoms');
-      spyOn(vecticObj, 'initFirebase');
-      spyOn(vecticObj, 'firebaseLib');
+      spyOn(vecticObj, 'firebaseLib').and.callThrough();
       spyOn(vecticObj, 'setVecticHooks');
+      spyOn(vecticObj, 'setTemplateHooks');
       spyOn(vecticObj, 'getObjectsRef');
       spyOn(vecticObj, 'getTemplatesRef');
       spyOn(vecticObj, 'getPalettesRef');
@@ -124,7 +129,7 @@ describe('vectic()', function () {
       });
     });
 
-    describe('init()', function() {
+    describe('init() - vecticID', function() {
       beforeEach(function() {
         vecticObj.init();
       });
@@ -134,8 +139,22 @@ describe('vectic()', function () {
       it('should trigger getDoms()', function() {
         expect(vecticObj.getDoms).toHaveBeenCalled();
       });
-      it('should trigger initFirebase()', function() {
-        expect(vecticObj.initFirebase).toHaveBeenCalled();
+      it('should populate html boiler content on target', function() {
+        expect(vecticObj.firebaseLib).toHaveBeenCalledWith('http://vecticdev.firebaseio.com/vectic/vectic1');
+      });
+      it('should store Firebase reference on vecticRef', function() {
+        expect(vecticObj.vecticRef).toEqual(firebaseLibMockObj);
+      });
+      it('should store FB Vectic Objects reference on vecticObjectsRef', function() {
+        expect(vecticObj.getObjectsRef).toHaveBeenCalled();
+        expect(vecticObj.getTemplatesRef).toHaveBeenCalled();
+        expect(vecticObj.getPalettesRef).toHaveBeenCalled();
+      });
+      it('should trigger setVecticHooks', function() {
+        expect(vecticObj.setVecticHooks).toHaveBeenCalled();
+      });
+      it('should not trigger setTemplateHooks', function() {
+        expect(vecticObj.setTemplateHooks).not.toHaveBeenCalled();
       });
     });
 
@@ -162,28 +181,6 @@ describe('vectic()', function () {
         expect(typeof vecticObj.paletteContainerDom).toEqual('object');;
       });
       // TODO: Write tests to make sure DOM objects are selected correctly if possible
-    });
-
-    describe('initFirebase()', function() {
-      beforeEach(function() {
-        vecticObj.initFirebase.and.callThrough();
-        vecticObj.firebaseLib.and.returnValue(firebaseLibMockObj);
-        vecticObj.initFirebase();
-      });
-      it('should populate html boiler content on target', function() {
-        expect(vecticObj.firebaseLib).toHaveBeenCalledWith('http://vecticdev.firebaseio.com/vectic/vectic1');
-      });
-      it('should store Firebase reference on vecticRef', function() {
-        expect(vecticObj.vecticRef).toEqual(firebaseLibMockObj);
-      });
-      it('should store FB Vectic Objects reference on vecticObjectsRef', function() {
-        expect(vecticObj.getObjectsRef).toHaveBeenCalled();
-        expect(vecticObj.getTemplatesRef).toHaveBeenCalled();
-        expect(vecticObj.getPalettesRef).toHaveBeenCalled();
-      });
-      it('should trigger setVecticHooks', function() {
-        expect(vecticObj.setVecticHooks).toHaveBeenCalled;
-      });
     });
 
     describe('getObjectsRef()', function() {
@@ -410,6 +407,51 @@ describe('vectic()', function () {
       });
     });
 
+  });
+
+  describe('function', function() {
+    vecticObj;
+    beforeEach(function() {
+      vecticObj = new vectic(templateParamsMock);
+      vecticObj.firebaseLib = firebaseLibMock;
+      spyOn(vecticObj, 'initHTML');
+      spyOn(vecticObj, 'getDoms');
+      spyOn(vecticObj, 'firebaseLib').and.callThrough();
+      spyOn(vecticObj, 'setVecticHooks');
+      spyOn(vecticObj, 'setTemplateHooks');
+      spyOn(vecticObj, 'getObjectsRef');
+      spyOn(vecticObj, 'getTemplatesRef');
+      spyOn(vecticObj, 'getPalettesRef');
+    });
+
+    describe('init() - templateID', function() {
+      beforeEach(function() {
+        vecticObj.init();
+      });
+      it('should trigger initHTML()', function() {
+        expect(vecticObj.initHTML).toHaveBeenCalled();
+      });
+      it('should trigger getDoms()', function() {
+        expect(vecticObj.getDoms).toHaveBeenCalled();
+      });
+      it('should populate html boiler content on target', function() {
+        expect(vecticObj.firebaseLib).toHaveBeenCalledWith('http://vecticdev.firebaseio.com/template/template1');
+      });
+      it('should store Firebase reference on templateRef', function() {
+        expect(vecticObj.templateRef).toEqual(firebaseLibMockObj);
+      });
+      it('should not store FB Vectic Objects reference on vecticObjectsRef', function() {
+        expect(vecticObj.getObjectsRef).not.toHaveBeenCalled();
+        expect(vecticObj.getTemplatesRef).not.toHaveBeenCalled();
+        expect(vecticObj.getPalettesRef).not.toHaveBeenCalled();
+      });
+      it('should not trigger setTemplateHooks', function() {
+        expect(vecticObj.setVecticHooks).not.toHaveBeenCalled();
+      });
+      it('should trigger setTemplateHooks', function() {
+        expect(vecticObj.setTemplateHooks).toHaveBeenCalled();
+      });
+    });
   });
 
   
