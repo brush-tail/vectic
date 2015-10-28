@@ -74,7 +74,7 @@ function _vectic_template(params) {
     _this.target.get(0).setAttributeNS(null, 'viewBox', viewBox);
 
     // Set palette
-    if(val.palette) {_this.target.get(0).setAttributeNS(null, 'class', 'p'+val.palette)}
+    if(val.palette) {_this.target.get(0).setAttributeNS(null, 'class', 'p'+val.palette);}
 
     var sOutput = '';
     for(var key in val.elements) {
@@ -110,6 +110,10 @@ function _vectic_template(params) {
     }
 
     _this.target.html(sOutput);
+    if(params.rootid) {
+      // Update root element with NS setting to trigger SVG render update
+      document.querySelector('svg#'+params.rootid).setAttributeNS(null, 'id', params.rootid);
+    }
   };
 
   this.destroy = function() {
@@ -165,6 +169,10 @@ function _vectic_palette(params) {
     }
 
     _this.target.html(sOutput);
+    if(params.rootid) {
+      // Update root element with NS setting to trigger SVG render update
+      document.querySelector('svg#'+params.rootid).setAttributeNS(null, 'id', params.rootid);
+    }
   };
 
   this.destroy = function() {};
@@ -247,6 +255,7 @@ function vectic(params) {
     }
     else if(_this.templateID) {
       _this.templateRef = new _this.firebaseLib(_this.pathTemplate+_this.templateID);
+      _this.vecticPalettesRef = _this.getPalettesRef();
       _this.setTemplateHooks();
     }
     else {
@@ -268,16 +277,16 @@ function vectic(params) {
   };
 
   this.getObjectsRef = function() {
-    if(!_this.vecticRef) {return console.error('vectic.getObjectsRef: Could not find vecticRef');}
-    return _this.vecticRef.child('objects');
+    if(!(_this.vecticRef || _this.templateRef)) {return console.error('vectic.getObjectsRef: Could not find vecticRef');}
+    return (_this.vecticRef || _this.templateRef).child('objects');
   };
   this.getTemplatesRef = function() {
-    if(!_this.vecticRef) {return console.error('vectic.getTemplatesRef: Could not find vecticRef');}
-    return _this.vecticRef.child('templates');
+    if(!(_this.vecticRef || _this.templateRef)) {return console.error('vectic.getTemplatesRef: Could not find vecticRef');}
+    return (_this.vecticRef || _this.templateRef).child('templates');
   };
   this.getPalettesRef = function() {
-    if(!_this.vecticRef) {return console.error('vectic.getPalettesRef: Could not find vecticRef');}
-    return _this.vecticRef.child('palettes');
+    if(!(_this.vecticRef || _this.templateRef)) {return console.error('vectic.getPalettesRef: Could not find vecticRef');}
+    return (_this.vecticRef || _this.templateRef).child('palettes');
   };
 
   this.setVecticHooks = function() {
@@ -309,6 +318,11 @@ function vectic(params) {
         height: '0',
       }; },
     });
+
+    // TODO: Add palette rendering
+
+    _this.vecticPalettesRef.off('child_added', _this.addPalette, _this.refError);
+    _this.vecticPalettesRef.on('child_added', _this.addPalette, _this.refError);
 
     _this.templateRef.child('settings').off('value', _this.templateSettingsChange, _this.refError);
     _this.templateRef.child('settings').on('value', _this.templateSettingsChange, _this.refError);
@@ -376,6 +390,7 @@ function vectic(params) {
     if(_this.vecticTemplateHandlers[key]) {_this.vecticTemplateHandlers[key].destroy();}
     _this.vecticTemplateHandlers[key] = new _this.initTemplate({
       id: templateid,
+      rootid: _this.rootID,
       vecticid: _this.vecticID,
       target: templateDom,
       path: _this.pathTemplate,
@@ -396,6 +411,7 @@ function vectic(params) {
     if(_this.vecticTemplateHandlers[key]) {_this.vecticTemplateHandlers[key].destroy();}
     _this.vecticTemplateHandlers[_this.templateID] = new _this.initTemplate({
       id: _this.templateID,
+      rootid: _this.rootID,
       // vecticid: _this.templateID,
       target: templateDom,
       path: _this.pathTemplate,
@@ -415,6 +431,7 @@ function vectic(params) {
     if(_this.vecticPaletteHandlers[key]) {_this.vecticPaletteHandlers[key].destroy();}
     _this.vecticPaletteHandlers[key] = new _this.initPalette({
       id: paletteid,
+      rootid: _this.rootID,
       vecticid: _this.vecticID,
       target: paletteDom,
       path: _this.pathPalette,

@@ -358,10 +358,12 @@ describe('vectic()', function () {
         expect(vecticObj.newTemplateDom).toHaveBeenCalledWith('key1');
       });
       it('should call initTemplate() to create separate DB object watcher', function() {
+        vecticObj.rootID = 'testRootID';
         vecticObj.addTemplate(fbMock);
         expect(vecticObj.initTemplate).toHaveBeenCalledWith({
           id: 'template1',
           vecticid: 'vectic1',
+          rootid: 'testRootID',
           target: templateDomMock,
           path: 'http://vecticdev.firebaseio.com/template/',
         });
@@ -440,10 +442,12 @@ describe('vectic()', function () {
       it('should store Firebase reference on templateRef', function() {
         expect(vecticObj.templateRef).toEqual(firebaseLibMockObj);
       });
-      it('should not store FB Vectic Objects reference on vecticObjectsRef', function() {
+      it('should not set getObjectsRef and getTemplatesRef', function() {
         expect(vecticObj.getObjectsRef).not.toHaveBeenCalled();
         expect(vecticObj.getTemplatesRef).not.toHaveBeenCalled();
-        expect(vecticObj.getPalettesRef).not.toHaveBeenCalled();
+      });
+      it('should set getPalettesRef', function() {
+        expect(vecticObj.getPalettesRef).toHaveBeenCalled();
       });
       it('should not trigger setTemplateHooks', function() {
         expect(vecticObj.setVecticHooks).not.toHaveBeenCalled();
