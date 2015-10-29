@@ -32,6 +32,9 @@ _htmlBoiler += '}';
 _htmlBoiler += '.svgContainer svg:not([width]) {';
 _htmlBoiler += 'width: 100% !important;';
 _htmlBoiler += '}';
+// _htmlBoiler += 'svg use {';
+// _htmlBoiler += 'pointer-events: none;';
+// _htmlBoiler += '}';
 _htmlBoiler += '</style>';
 _htmlBoiler += '</span>';
 
@@ -211,6 +214,24 @@ function vectic(params) {
   this.vecticTemplateHandlers = {};
   this.vecticPaletteHandlers = {};
 
+  
+  // ** Mouse interactions
+
+  // Root
+  this.moveRoot = params.moveRoot || function() {};
+  this.clickRoot = params.clickRoot || function() {};
+  this.enterRoot = params.enterRoot || function() {};
+  this.leaveRoot = params.leaveRoot || function() {};
+  this.scrollRoot = params.scrollRoot || function() {};
+
+  // Objects
+  this.moveObject = params.moveObject || function() {};
+  this.clickObject = params.clickObject || function() {};
+  this.enterObject = params.enterObject || function() {};
+  this.leaveObject = params.leaveObject || function() {};
+  this.scrollObject = params.scrollObject || function() {};
+
+
   // Get Firebase if available
   if(typeof Firebase != 'undefined') {
     this.firebaseLib = Firebase;
@@ -230,8 +251,6 @@ function vectic(params) {
   Object.defineProperty(this, 'pathPalette', {
     get: function() {return this.pathBase+'palette/';},
   });
-
-  console.log(params)
 
   if(!(this.targetObject && this.targetObject.html)) {return console.error('vectic(): missing target jQuery object');}
   if(!(this.vecticID || this.templateID)) {return console.error('vectic(): missing vecticID or templateID');}
@@ -261,6 +280,8 @@ function vectic(params) {
     else {
       return console.error('vectic: Missing vecticID or templateID');
     }
+
+    _this.clickRegister()
   };
 
   // Sets internal static HTML
@@ -348,8 +369,6 @@ function vectic(params) {
     _this.targetObjectSvg.setAttributeNS(null, 'viewBox', viewBox);
 
     // reference
-    console.log('test')
-    console.log($('svg#'+_this.rootID+' g#objects use#reference').attr('width'));
     $('svg#'+_this.rootID+' g#objects use#reference').get(0).setAttributeNS(null, 'width', val.width);
     $('svg#'+_this.rootID+' g#objects use#reference').get(0).setAttributeNS(null, 'height', val.height);
   };
@@ -441,4 +460,25 @@ function vectic(params) {
   this.newPaletteDom = function(key) {
     return $('<style id="p'+key+'"></style>');
   };
+
+  // Click controls
+  this.clickRegister = function() {
+    if(!_this.rootID) {return console.error('clickRegister() - no rootID');}
+
+    // Root click
+    $('svg#'+_this.rootID).on('click', _this.clickRoot);
+    $('svg#'+_this.rootID).on('movemove', _this.moveRoot);
+    $('svg#'+_this.rootID).on('mouseenter', _this.enterRoot);
+    $('svg#'+_this.rootID).on('mouseleave', _this.leaveRoot);
+    $('svg#'+_this.rootID).on('scroll', _this.scrollRoot);
+
+
+    // Object click
+    $('svg#'+_this.rootID).on('click', 'use', _this.clickObject);
+    $('svg#'+_this.rootID).on('movemove', 'use', _this.moveObject);
+    $('svg#'+_this.rootID).on('mouseenter', 'use', _this.enterObject);
+    $('svg#'+_this.rootID).on('mouseleave', 'use', _this.leaveObject);
+    $('svg#'+_this.rootID).on('scroll', 'use', _this.scrollObject);
+  };
 }
+

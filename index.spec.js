@@ -21,6 +21,9 @@ _htmlBoilerMock += '}';
 _htmlBoilerMock += '.svgContainer svg:not([width]) {';
 _htmlBoilerMock += 'width: 100% !important;';
 _htmlBoilerMock += '}';
+// _htmlBoilerMock += 'svg use {';
+// _htmlBoilerMock += 'pointer-events: none;';
+// _htmlBoilerMock += '}';
 _htmlBoilerMock += '</style>';
 _htmlBoilerMock += '</span>';
 
