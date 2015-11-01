@@ -480,5 +480,15 @@ function vectic(params) {
     $('svg#'+_this.rootID).on('mouseleave', 'use', _this.leaveObject);
     $('svg#'+_this.rootID).on('scroll', 'use', _this.scrollObject);
   };
+
+  this.setHighlight = function(data) {
+    // TODO
+
+    // data - [{id: '', dom: jqueryDom, }]
+
+    // This should active a pre-drawn (but hidden) group layer with rendered anchor points set for each acceptable type
+    // Active it by simply adding a class to the svgContainer dom which makes it visible
+    // Possibly generate the on-click etc. functions dynamically as well as rendered anchor points from an array of selectable items
+  };
 }
 
