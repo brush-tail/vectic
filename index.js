@@ -18,6 +18,11 @@ _htmlBoiler += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="{{ROOT
 _htmlBoiler += '<defs id="palettes"></defs>';
 _htmlBoiler += '<defs id="templates"></defs>';
 _htmlBoiler += '<g id="objects"></g>';
+// TODO: anchors
+_htmlBoiler += '<g id="hooks">';
+
+// TODO: more hooks as needed
+_htmlBoiler += '</g>';
 _htmlBoiler += '</svg>';
 
 _htmlBoiler += '<style>';
@@ -35,7 +40,43 @@ _htmlBoiler += '}';
 // _htmlBoiler += 'svg use {';
 // _htmlBoiler += 'pointer-events: none;';
 // _htmlBoiler += '}';
+_htmlBoiler += '.svgContainer svg .hook {';
+// _htmlBoiler += 'display: none;';
+_htmlBoiler += '}';
+_htmlBoiler += '.svgContainer svg .hook .inner1 {';
+_htmlBoiler += 'fill:red;';
+_htmlBoiler += 'stroke:blue;';
+_htmlBoiler += '}';
+_htmlBoiler += '.svgContainer svg .hook .outer1 {';
+_htmlBoiler += 'fill:#FF00FF;';
+_htmlBoiler += 'stroke:#FFFF00;';
+_htmlBoiler += '}';
 _htmlBoiler += '</style>';
+
+// Hooks - Overlay
+_htmlBoiler += '<div class="hook hook_cx" style="">';
+_htmlBoiler += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="hooksTest" width="30" height="30" viewBox="0 0 30 30">';
+_htmlBoiler += '<circle id="outer1" class="outer1" cx="15" cy="15" r="5"></circle>';
+_htmlBoiler += '<circle id="inner1" class="inner1" cx="15" cy="15" r="5"></circle>';
+_htmlBoiler += '<style>';
+_htmlBoiler += '.hook svg circle {fill:green;}';
+_htmlBoiler += '@keyframes hook_pulse_outer {';
+_htmlBoiler += '  0% {';
+_htmlBoiler += '    transform: scale(1.0);';
+_htmlBoiler += '  }';
+_htmlBoiler += '  100% {';
+_htmlBoiler += '    transform: scale(3.0) translate(-10px,-10px);';
+_htmlBoiler += '    opacity: 0.0;';
+_htmlBoiler += '  }';
+_htmlBoiler += '}';
+_htmlBoiler += '.hook svg circle.outer1 {opacity:1.0;}';
+_htmlBoiler += '.hook:hover svg circle.outer1 {';
+_htmlBoiler += 'animation: hook_pulse_outer 1.5s infinite;';
+_htmlBoiler += '}';
+_htmlBoiler += '</style>';
+_htmlBoiler += '</svg>';
+_htmlBoiler += '</div>';
+
 _htmlBoiler += '</span>';
 
 function _refError(params) {
