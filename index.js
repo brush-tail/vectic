@@ -21,6 +21,8 @@ var _htmlBoiler = '\
     <g id="anchors"></g>\
     <g id="hooks"></g>\
   </svg>\
+  <div id="hooks">\
+  </div>\
 </span>\
 ';
 
