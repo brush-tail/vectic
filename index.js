@@ -12,72 +12,40 @@
 
 var _vecticUID = 0;
 
-var _htmlBoiler = '';
-_htmlBoiler += '<span class="svgContainer">';
-_htmlBoiler += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="{{ROOTID}}">';
-_htmlBoiler += '<defs id="palettes"></defs>';
-_htmlBoiler += '<defs id="templates"></defs>';
-_htmlBoiler += '<g id="objects"></g>';
-// TODO: anchors
-_htmlBoiler += '<g id="hooks">';
+var _htmlBoiler = '\
+<span class="svgContainer">\
+  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="{{ROOTID}}">\
+    <defs id="palettes"></defs>\
+    <defs id="templates"></defs>\
+    <g id="objects"></g>\
+    <g id="anchors"></g>\
+    <g id="hooks"></g>\
+  </svg>\
+</span>\
+';
 
-// TODO: more hooks as needed
-_htmlBoiler += '</g>';
-_htmlBoiler += '</svg>';
+var _hookPointStyle = '\
+.svgContainer {\
+  -webkit-touch-callout: none !important;\
+  -webkit-user-select: none !important;\
+  -khtml-user-select: none !important;\
+  -moz-user-select: none !important;\
+  -ms-user-select: none !important;\
+  user-select: none !important;\
+  position: relative;\
+}\
+.svgContainer svg:not([width]) {\
+  width: 100% !important;\
+}\
+';
 
-_htmlBoiler += '<style>';
-_htmlBoiler += '.svgContainer {';
-_htmlBoiler += '-webkit-touch-callout: none !important;';
-_htmlBoiler += '-webkit-user-select: none !important;';
-_htmlBoiler += '-khtml-user-select: none !important;';
-_htmlBoiler += '-moz-user-select: none !important;';
-_htmlBoiler += '-ms-user-select: none !important;';
-_htmlBoiler += 'user-select: none !important;';
-_htmlBoiler += '}';
-_htmlBoiler += '.svgContainer svg:not([width]) {';
-_htmlBoiler += 'width: 100% !important;';
-_htmlBoiler += '}';
-// _htmlBoiler += 'svg use {';
-// _htmlBoiler += 'pointer-events: none;';
-// _htmlBoiler += '}';
-_htmlBoiler += '.svgContainer svg .hook {';
-// _htmlBoiler += 'display: none;';
-_htmlBoiler += '}';
-_htmlBoiler += '.svgContainer svg .hook .inner1 {';
-_htmlBoiler += 'fill:red;';
-_htmlBoiler += 'stroke:blue;';
-_htmlBoiler += '}';
-_htmlBoiler += '.svgContainer svg .hook .outer1 {';
-_htmlBoiler += 'fill:#FF00FF;';
-_htmlBoiler += 'stroke:#FFFF00;';
-_htmlBoiler += '}';
-_htmlBoiler += '</style>';
-
-// Hooks - Overlay
-_htmlBoiler += '<div class="hook hook_cx" style="">';
-_htmlBoiler += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="hooksTest" width="30" height="30" viewBox="0 0 30 30">';
-_htmlBoiler += '<circle id="outer1" class="outer1" cx="15" cy="15" r="5"></circle>';
-_htmlBoiler += '<circle id="inner1" class="inner1" cx="15" cy="15" r="5"></circle>';
-_htmlBoiler += '<style>';
-_htmlBoiler += '.hook svg circle {fill:green;}';
-_htmlBoiler += '@keyframes hook_pulse_outer {';
-_htmlBoiler += '  0% {';
-_htmlBoiler += '    transform: scale(1.0);';
-_htmlBoiler += '  }';
-_htmlBoiler += '  100% {';
-_htmlBoiler += '    transform: scale(3.0) translate(-10px,-10px);';
-_htmlBoiler += '    opacity: 0.0;';
-_htmlBoiler += '  }';
-_htmlBoiler += '}';
-_htmlBoiler += '.hook svg circle.outer1 {opacity:1.0;}';
-_htmlBoiler += '.hook:hover svg circle.outer1 {';
-_htmlBoiler += 'animation: hook_pulse_outer 1.5s infinite;';
-_htmlBoiler += '}';
-_htmlBoiler += '</style>';
-_htmlBoiler += '</svg>';
-_htmlBoiler += '</div>';
-
-_htmlBoiler += '</span>';
+var _vecticHookItems = {
+  'use': {
+    hooks: [{
+      att: '', //Attribute edited by 
+    }],
+  },
+};
 
 function _refError(params) {
   // TODO: Handle Firebase error messages
@@ -303,6 +271,7 @@ function vectic(params) {
   this.init = function() {
     if(!_this.firebaseLib) {return console.error('vectic.init(): Missing Firebase library');}
 
+    _this.initStyles();
     _this.initHTML();
     _this.getDoms();
 
@@ -323,6 +292,14 @@ function vectic(params) {
     }
 
     _this.clickRegister()
+  };
+
+  this.initStyles = function() {
+    // Add css styles and reusable content to <body> if not already added
+    if($('body #vecticStyler').length) {return;}
+
+    var vecticStyler = $('<div id="vecticStyler">'+_hookPointStyle+'</div>');
+    $('body').append(vecticStyler);
   };
 
   // Sets internal static HTML
@@ -507,29 +484,38 @@ function vectic(params) {
     if(!_this.rootID) {return console.error('clickRegister() - no rootID');}
 
     // Root click
-    $('svg#'+_this.rootID).on('click', _this.clickRoot);
-    $('svg#'+_this.rootID).on('movemove', _this.moveRoot);
-    $('svg#'+_this.rootID).on('mouseenter', _this.enterRoot);
-    $('svg#'+_this.rootID).on('mouseleave', _this.leaveRoot);
-    $('svg#'+_this.rootID).on('scroll', _this.scrollRoot);
+    $('svg#'+_this.rootID).on('click', function(event) {
+      _this.clickRoot(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('movemove', function(event) {
+      _this.moveRoot(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('mouseenter', function(event) {
+      _this.enterRoot(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('mouseleave', function(event) {
+      _this.leaveRoot(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('scroll', function(event) {
+      _this.scrollRoot(event, _this.rootID);
+    });
 
 
     // Object click
-    $('svg#'+_this.rootID).on('click', 'use', _this.clickObject);
-    $('svg#'+_this.rootID).on('movemove', 'use', _this.moveObject);
-    $('svg#'+_this.rootID).on('mouseenter', 'use', _this.enterObject);
-    $('svg#'+_this.rootID).on('mouseleave', 'use', _this.leaveObject);
-    $('svg#'+_this.rootID).on('scroll', 'use', _this.scrollObject);
-  };
-
-  this.setHighlight = function(data) {
-    // TODO
-
-    // data - [{id: '', dom: jqueryDom, }]
-
-    // This should active a pre-drawn (but hidden) group layer with rendered anchor points set for each acceptable type
-    // Active it by simply adding a class to the svgContainer dom which makes it visible
-    // Possibly generate the on-click etc. functions dynamically as well as rendered anchor points from an array of selectable items
+    $('svg#'+_this.rootID).on('click', 'use', function(event) {
+      _this.clickObject(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('movemove', 'use', function(event) {
+      _this.moveObject(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('mouseenter', 'use', function(event) {
+      _this.enterObject(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('mouseleave', 'use', function(event) {
+      _this.leaveObject(event, _this.rootID);
+    });
+    $('svg#'+_this.rootID).on('scroll', 'use', function(event) {
+      _this.scrollObject(event, _this.rootID);
+    });
   };
 }
-
