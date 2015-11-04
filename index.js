@@ -18,15 +18,11 @@ var _htmlBoiler = '\
     <defs id="palettes"></defs>\
     <defs id="templates"></defs>\
     <g id="objects"></g>\
-    <g id="anchors"></g>\
-    <g id="hooks"></g>\
   </svg>\
-  <div id="hooks">\
-  </div>\
 </span>\
 ';
 
-var _hookPointStyle = '\
+var _globalVecticStyler = '\
 .svgContainer {\
   -webkit-touch-callout: none !important;\
   -webkit-user-select: none !important;\
@@ -34,20 +30,11 @@ var _hookPointStyle = '\
   -moz-user-select: none !important;\
   -ms-user-select: none !important;\
   user-select: none !important;\
-  position: relative;\
 }\
 .svgContainer svg:not([width]) {\
   width: 100% !important;\
 }\
 ';
-
-var _vecticHookItems = {
-  'use': {
-    hooks: [{
-      att: '', //Attribute edited by 
-    }],
-  },
-};
 
 function _refError(params) {
   // TODO: Handle Firebase error messages
@@ -97,7 +84,7 @@ function _vectic_template(params) {
       switch(value.tag) {
         case 'circle':
           if(!(value.r)) {return;}
-          sOutput += '<circle id="#t'+key+'" r="'+value.r+'"';
+          sOutput += '<circle objID="'+key+'" id="#t'+key+'" r="'+value.r+'"';
           if(value.color) {sOutput+=' class="c'+value.color+'"';}
           if(value.cx) {sOutput+=' cx="'+value.cx+'"';}
           if(value.cy) {sOutput+=' cy="'+value.cy+'"';}
@@ -105,7 +92,7 @@ function _vectic_template(params) {
           break;
         case 'rect':
           if(!(value.width && value.height)) {return;}
-          sOutput += '<rect id="#t'+key+'" width="'+value.width+'" height="'+value.height+'"';
+          sOutput += '<rect objID="'+key+'" id="#t'+key+'" width="'+value.width+'" height="'+value.height+'"';
           if(value.color) {sOutput+=' class="c'+value.color+'"';}
           if(value.x) {sOutput+=' x="'+value.x+'"';}
           if(value.y) {sOutput+=' y="'+value.y+'"';}
@@ -300,7 +287,7 @@ function vectic(params) {
     // Add css styles and reusable content to <body> if not already added
     if($('body #vecticStyler').length) {return;}
 
-    var vecticStyler = $('<div id="vecticStyler">'+_hookPointStyle+'</div>');
+    var vecticStyler = $('<div id="vecticStyler">'+_globalVecticStyler+'</div>');
     $('body').append(vecticStyler);
   };
 
@@ -487,37 +474,77 @@ function vectic(params) {
 
     // Root click
     $('svg#'+_this.rootID).on('click', function(event) {
-      _this.clickRoot(event, _this.rootID);
+      // console.log('TEST')
+      // var id = $(this).attr('id');
+      // console.log(id)
+      // console.log(_this.vecticObjectsRef.child('object1'));
+      _this.clickRoot(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('movemove', function(event) {
-      _this.moveRoot(event, _this.rootID);
+      // console.log('TEST')
+      // var id = $(this).attr('id');
+      // console.log(id)
+      // console.log(_this.vecticObjectsRef.child('object1'));
+      _this.moveRoot(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('mouseenter', function(event) {
-      _this.enterRoot(event, _this.rootID);
+      // console.log('TEST')
+      // var id = $(this).attr('id');
+      // console.log(id)
+      // console.log(_this.vecticObjectsRef.child('object1'));
+      _this.enterRoot(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('mouseleave', function(event) {
-      _this.leaveRoot(event, _this.rootID);
+      // console.log('TEST')
+      // var id = $(this).attr('id');
+      // console.log(id)
+      // console.log(_this.vecticObjectsRef.child('object1'));
+      _this.leaveRoot(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('scroll', function(event) {
-      _this.scrollRoot(event, _this.rootID);
+      // console.log('TEST')
+      // var id = $(this).attr('id');
+      // console.log(id)
+      // console.log(_this.vecticObjectsRef.child('object1'));
+      _this.scrollRoot(event, this, _this.rootID);
     });
 
 
     // Object click
     $('svg#'+_this.rootID).on('click', 'use', function(event) {
-      _this.clickObject(event, _this.rootID);
+      console.log('TEST')
+      var id = $(this).attr('id');
+      console.log(id)
+      console.log(_this.vecticObjectsRef.child('object1'));
+      _this.clickObject(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('movemove', 'use', function(event) {
-      _this.moveObject(event, _this.rootID);
+      console.log('TEST')
+      var id = $(this).attr('id');
+      console.log(id)
+      console.log(_this.vecticObjectsRef.child('object1'));
+      _this.moveObject(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('mouseenter', 'use', function(event) {
-      _this.enterObject(event, _this.rootID);
+      console.log('TEST')
+      var id = $(this).attr('id');
+      console.log(id)
+      console.log(_this.vecticObjectsRef.child('object1'));
+      _this.enterObject(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('mouseleave', 'use', function(event) {
-      _this.leaveObject(event, _this.rootID);
+      console.log('TEST')
+      var id = $(this).attr('id');
+      console.log(id)
+      console.log(_this.vecticObjectsRef.child('object1'));
+      _this.leaveObject(event, this, _this.rootID);
     });
     $('svg#'+_this.rootID).on('scroll', 'use', function(event) {
-      _this.scrollObject(event, _this.rootID);
+      console.log('TEST')
+      var id = $(this).attr('id');
+      console.log(id)
+      console.log(_this.vecticObjectsRef.child('object1'));
+      _this.scrollObject(event, this, _this.rootID);
     });
   };
 }
