@@ -246,6 +246,8 @@ describe('vectic()', function () {
         expect(vecticSettingsRefMock.off).toHaveBeenCalledWith('value', vecticObj.settingsChange, vecticObj.refError);
         expect(firebaseLibMockObj.child).toHaveBeenCalledWith('settings');
         expect(vecticSettingsRefMock.on).toHaveBeenCalledWith('value', vecticObj.settingsChange, vecticObj.refError);
+        expect(vecticSettingsRefMock.off).toHaveBeenCalledWith('value', vecticObj.saveSettingsLocal, vecticObj.refError);
+        expect(vecticSettingsRefMock.on).toHaveBeenCalledWith('value', vecticObj.saveSettingsLocal, vecticObj.refError);
       });
     });
 

@@ -212,6 +212,10 @@ function vectic(params) {
   this.vecticTemplateHandlers = {};
   this.vecticPaletteHandlers = {};
 
+  // Local value storage for reference
+  this.dataSettings = null;
+  this.sizeSettings = null;
+
   
   // ** Mouse interactions
 
@@ -330,6 +334,9 @@ function vectic(params) {
 
     _this.vecticRef.child('settings').off('value', _this.settingsChange, _this.refError);
     _this.vecticRef.child('settings').on('value', _this.settingsChange, _this.refError);
+
+    _this.vecticRef.child('settings').off('value', _this.saveSettingsLocal, _this.refError);
+    _this.vecticRef.child('settings').on('value', _this.saveSettingsLocal, _this.refError);
   };
 
   this.setTemplateHooks = function() {
@@ -366,6 +373,11 @@ function vectic(params) {
 
     var viewBox = '0 0 '+val.width+' '+val.height;
     _this.targetObjectSvg.setAttributeNS(null, 'viewBox', viewBox);
+  };
+
+  this.saveSettingsLocal = function(snapshot) {
+    _this.dataSettings = snapshot.val();
+    _this.updateSizing();
   };
 
   this.templateSettingsChange = function(snapshot) {
@@ -474,77 +486,157 @@ function vectic(params) {
 
     // Root click
     $('svg#'+_this.rootID).on('click', function(event) {
-      // console.log('TEST')
-      // var id = $(this).attr('id');
-      // console.log(id)
-      // console.log(_this.vecticObjectsRef.child('object1'));
-      _this.clickRoot(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.clickRoot(params);
     });
     $('svg#'+_this.rootID).on('movemove', function(event) {
-      // console.log('TEST')
-      // var id = $(this).attr('id');
-      // console.log(id)
-      // console.log(_this.vecticObjectsRef.child('object1'));
-      _this.moveRoot(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.moveRoot(params);
     });
     $('svg#'+_this.rootID).on('mouseenter', function(event) {
-      // console.log('TEST')
-      // var id = $(this).attr('id');
-      // console.log(id)
-      // console.log(_this.vecticObjectsRef.child('object1'));
-      _this.enterRoot(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.enterRoot(params);
     });
     $('svg#'+_this.rootID).on('mouseleave', function(event) {
-      // console.log('TEST')
-      // var id = $(this).attr('id');
-      // console.log(id)
-      // console.log(_this.vecticObjectsRef.child('object1'));
-      _this.leaveRoot(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.leaveRoot(params);
     });
     $('svg#'+_this.rootID).on('scroll', function(event) {
-      // console.log('TEST')
-      // var id = $(this).attr('id');
-      // console.log(id)
-      // console.log(_this.vecticObjectsRef.child('object1'));
-      _this.scrollRoot(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.scrollRoot(params);
     });
 
 
     // Object click
     $('svg#'+_this.rootID).on('click', 'use', function(event) {
-      console.log('TEST')
-      var id = $(this).attr('id');
-      console.log(id)
-      console.log(_this.vecticObjectsRef.child('object1'));
-      _this.clickObject(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.clickObject(params);
     });
     $('svg#'+_this.rootID).on('movemove', 'use', function(event) {
-      console.log('TEST')
-      var id = $(this).attr('id');
-      console.log(id)
-      console.log(_this.vecticObjectsRef.child('object1'));
-      _this.moveObject(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.moveObject(params);
     });
     $('svg#'+_this.rootID).on('mouseenter', 'use', function(event) {
-      console.log('TEST')
-      var id = $(this).attr('id');
-      console.log(id)
-      console.log(_this.vecticObjectsRef.child('object1'));
-      _this.enterObject(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.enterObject(params);
     });
     $('svg#'+_this.rootID).on('mouseleave', 'use', function(event) {
-      console.log('TEST')
-      var id = $(this).attr('id');
-      console.log(id)
-      console.log(_this.vecticObjectsRef.child('object1'));
-      _this.leaveObject(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.leaveObject(params);
     });
     $('svg#'+_this.rootID).on('scroll', 'use', function(event) {
-      console.log('TEST')
-      var id = $(this).attr('id');
-      console.log(id)
-      console.log(_this.vecticObjectsRef.child('object1'));
-      _this.scrollObject(event, this, _this.rootID);
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.scrollObject(params);
     });
+  };
+
+  // Resizing tools
+  this.fixSize = function(val) {
+    // Switches off scale-to-fit
+    if(val === undefined) {return;}      // Ignore undefined values. Only null resets
+    if(!_this.sizeSettings) {_this.sizeSettings = {};}
+    _this.sizeSettings.fixSize = (val===true) || false;
+    _this.updateSizing();
+  };
+  this.setWidth = function(val) {
+    if(val === undefined) {return;}      // Ignore undefined values. Only null resets
+    if(!_this.sizeSettings) {_this.sizeSettings = {};}
+    _this.sizeSettings.width = val;
+    _this.updateSizing();
+  };
+  this.setHeight = function(val) {
+    if(val === undefined) {return;}      // Ignore undefined values. Only null resets
+    if(!_this.sizeSettings) {_this.sizeSettings = {};}
+    _this.sizeSettings.height = val;
+    _this.updateSizing();
+  };
+  this.setZoom = function(val) {
+    if(val === undefined) {return;}      // Ignore undefined values. Only null resets
+    if(!_this.sizeSettings) {_this.sizeSettings = {};}
+    _this.sizeSettings.zoom = val;
+    _this.updateSizing();
+  };
+  this.aspectRatio = function(val) {
+    // Ref - https://developer.mozilla.org/en/docs/Web/SVG/Attribute/preserveAspectRatio
+    if(val === undefined) {return;}       // Ignore undefined values. Only null resets
+    if(!_this.sizeSettings) {_this.sizeSettings = {};}
+    _this.sizeSettings.preserveAspectRatio = val;
+    _this.updateSizing();
+  }
+
+  this.updateSizing = function() {
+    // TODO: Check both size and settings and update when both are not (undefined)
+    if(!(_this.sizeSettings && _this.dataSettings)) {return;}
+
+    var root = document.querySelector('svg#'+_this.rootID);
+
+    var width = null;
+    var height = null;
+
+    if(_this.sizeSettings.fixSize) {
+      if(_this.dataSettings.width) { width = _this.dataSettings.width; }
+      if(_this.dataSettings.height) { height = _this.dataSettings.height; }
+    }
+    else if(_this.sizeSettings.width || _this.sizeSettings.height) {
+      if(_this.sizeSettings.width) { width = _this.sizeSettings.width; }
+      if(_this.sizeSettings.height) { height = _this.sizeSettings.height; }
+    }
+    
+    if(_this.sizeSettings.zoom) {
+      if(width) { width = width * this.sizeSettings.zoom; }
+      if(height) { height = height * this.sizeSettings.zoom; }
+    }
+
+    if(width || height) {
+      root.removeAttributeNS(null, 'width');
+      root.removeAttributeNS(null, 'height');
+      if(width) { root.setAttributeNS(null, 'width', width); }
+      if(height) { root.setAttributeNS(null, 'height', height); }
+    }
+
+    root.removeAttributeNS(null, 'preserveAspectRatio');
+    if(_this.sizeSettings.preserveAspectRatio) {
+      root.setAttributeNS(null, 'preserveAspectRatio', _this.sizeSettings.preserveAspectRatio);
+    }
   };
 }
