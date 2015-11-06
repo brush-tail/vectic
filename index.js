@@ -10,6 +10,21 @@
 **      ID of vectic to load/display
 */
 
+
+/*
+
+
+
+TODO: 
+
+<use> Is not scaling child content to fit it's width/height.
+
+
+
+*/
+
+
+
 var _vecticUID = 0;
 
 var _htmlBoiler = '\
