@@ -10,21 +10,6 @@
 **      ID of vectic to load/display
 */
 
-
-/*
-
-
-
-TODO: 
-
-<use> Is not scaling child content to fit it's width/height.
-
-
-
-*/
-
-
-
 var _vecticUID = 0;
 
 var _htmlBoiler = '\
@@ -240,6 +225,8 @@ function vectic(params) {
   this.enterRoot = params.enterRoot || function() {};
   this.leaveRoot = params.leaveRoot || function() {};
   this.scrollRoot = params.scrollRoot || function() {};
+  this.mouseupRoot = params.mouseupRoot || function() {};
+  this.mousedownRoot = params.mousedownRoot || function() {};
 
   // Objects
   this.moveObject = params.moveObject || function() {};
@@ -247,6 +234,8 @@ function vectic(params) {
   this.enterObject = params.enterObject || function() {};
   this.leaveObject = params.leaveObject || function() {};
   this.scrollObject = params.scrollObject || function() {};
+  this.mouseupObject = params.mouseupObject || function() {};
+  this.mousedownObject = params.mousedownObject || function() {};
 
 
   // Get Firebase if available
@@ -508,7 +497,7 @@ function vectic(params) {
       };
       _this.clickRoot(params);
     });
-    $('svg#'+_this.rootID).on('movemove', function(event) {
+    $('svg#'+_this.rootID).on('mousemove', function(event) {
       var params = {
         event: event,
         this: this,
@@ -540,6 +529,22 @@ function vectic(params) {
       };
       _this.scrollRoot(params);
     });
+    $('svg#'+_this.rootID).on('mousedown', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.mousedownRoot(params);
+    });
+    $('svg#'+_this.rootID).on('mouseup', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.mouseupRoot(params);
+    });
 
 
     // Object click
@@ -551,7 +556,7 @@ function vectic(params) {
       };
       _this.clickObject(params);
     });
-    $('svg#'+_this.rootID).on('movemove', 'use', function(event) {
+    $('svg#'+_this.rootID).on('mousemove', 'use', function(event) {
       var params = {
         event: event,
         this: this,
@@ -582,6 +587,22 @@ function vectic(params) {
         rootID: _this.rootID,
       };
       _this.scrollObject(params);
+    });
+    $('svg#'+_this.rootID).on('mouseup', 'use', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.mouseupObject(params);
+    });
+    $('svg#'+_this.rootID).on('mousedown', 'use', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.mousedownObject(params);
     });
   };
 
