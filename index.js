@@ -364,8 +364,18 @@ function vectic(params) {
 
   this.getObjectsRef = function() {
     if(!(_this.vecticRef || _this.templateRef)) {return console.error('vectic.getObjectsRef: Could not find vecticRef');}
-    return (_this.vecticRef || _this.templateRef).child('objects');
+    
+    if(_this.vecticRef) {
+      return (_this.vecticRef).child('objects');
+    }
+    else if(_this.templateRef) {
+      return (_this.templateRef).child('elements');
+    }
+    else {
+      console.error('vectic.getObjectsRef() - No reference object was returned');
+    }
   };
+
   this.getTemplatesRef = function() {
     if(!(_this.vecticRef || _this.templateRef)) {return console.error('vectic.getTemplatesRef: Could not find vecticRef');}
     return (_this.vecticRef || _this.templateRef).child('templates');
@@ -429,7 +439,8 @@ function vectic(params) {
   // Object hook handlers
   this.newObjectDom = function(key) {
     var newDom = document.createElementNS('http://www.w3.org/2000/svg', ('use'));
-    newDom.setAttributeNS(null, 'id', key);
+    newDom.setAttributeNS(null, 'id', 'u'+key);
+    newDom.setAttributeNS(null, 'objid', key);
     return newDom;
   };
   this.addObject = function(fbRef, prevKey) {
