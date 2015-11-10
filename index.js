@@ -619,7 +619,7 @@ function vectic(params) {
     });
 
 
-    // Object click
+    // Layer click (only when vectic id supplied)
     $('svg#'+_this.rootID).on('click', 'use', function(event) {
       var params = {
         event: event,
@@ -669,6 +669,65 @@ function vectic(params) {
       _this.mouseupObject(params);
     });
     $('svg#'+_this.rootID).on('mousedown', 'use', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.mousedownObject(params);
+    });
+
+
+    // Layer click (only when vectic id supplied)
+    $('svg#'+_this.rootID+' #templates_edit').on('click', '*', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.clickObject(params);
+    });
+    $('svg#'+_this.rootID+' #templates_edit').on('mousemove', '*', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.moveObject(params);
+    });
+    $('svg#'+_this.rootID+' #templates_edit').on('mouseenter', '*', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.enterObject(params);
+    });
+    $('svg#'+_this.rootID+' #templates_edit').on('mouseleave', '*', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.leaveObject(params);
+    });
+    $('svg#'+_this.rootID+' #templates_edit').on('scroll', '*', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.scrollObject(params);
+    });
+    $('svg#'+_this.rootID+' #templates_edit').on('mouseup', '*', function(event) {
+      var params = {
+        event: event,
+        this: this,
+        rootID: _this.rootID,
+      };
+      _this.mouseupObject(params);
+    });
+    $('svg#'+_this.rootID+' #templates_edit').on('mousedown', '*', function(event) {
       var params = {
         event: event,
         this: this,
