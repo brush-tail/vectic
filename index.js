@@ -18,6 +18,7 @@ var _htmlBoiler = '\
     <defs id="palettes"></defs>\
     <defs id="templates"></defs>\
     <g id="objects"></g>\
+    <g id="templates_edit"></g>\
   </svg>\
 </span>\
 ';
@@ -41,6 +42,69 @@ function _refError(params) {
   console.error('Firebase refError()');
   console.error(params);
 }
+
+function _generateElement(data, key) {
+  if(!data) {return console.error('_generateElement missing data');}
+  if(!key) {return console.error('_generateElement missing key');}
+
+  var sOutput = '';
+  switch(data.tag) {
+    case 'circle':
+      if(!(data.r && data.cx && data.cy)) {return;}
+      sOutput += '<circle objid="'+key+'" id="t'+key+'" r="'+data.r+'"';
+      if(data.color) {sOutput+=' class="c'+data.color+'"';}
+      if(data.cx) {sOutput+=' cx="'+data.cx+'"';}
+      if(data.cy) {sOutput+=' cy="'+data.cy+'"';}
+      sOutput += '></circle>';
+      break;
+    case 'rect':
+      if(!(data.x && data.y && data.width && data.height)) {return;}
+      sOutput += '<rect objid="'+key+'" id="t'+key+'" width="'+data.width+'" height="'+data.height+'"';
+      if(data.color) {sOutput+=' class="c'+data.color+'"';}
+      if(data.x) {sOutput+=' x="'+data.x+'"';}
+      if(data.y) {sOutput+=' y="'+data.y+'"';}
+      sOutput += '></rect>';
+      break;
+    default:
+      console.error('Unknown element tag: '+data.tag);
+      break;
+  }
+  return sOutput;
+};
+
+function _generateElementObj(data, key) {
+  if(!data) {return console.error('_generateElement missing data');}
+  if(!key) {return console.error('_generateElement missing key');}
+
+  var sOutput = '';
+  switch(data.tag) {
+    case 'circle':
+      if(!(data.r && data.cx && data.cy)) {return;}
+      sOutput = document.createElementNS('http://www.w3.org/2000/svg', ('circle'));
+      sOutput.setAttributeNS(null, 'objid', key);
+      sOutput.setAttributeNS(null, 'id', 't'+key);
+      sOutput.setAttributeNS(null, 'r', data.r);
+      sOutput.setAttributeNS(null, 'cx', data.cx);
+      sOutput.setAttributeNS(null, 'cy', data.cy);
+      if(data.color) {sOutput.setAttributeNS(null, 'class', 'c'+data.color);}
+      break;
+    case 'rect':
+      if(!(data.x && data.y && data.width && data.height)) {return;}
+      sOutput = document.createElementNS('http://www.w3.org/2000/svg', ('rect'));
+      sOutput.setAttributeNS(null, 'objid', key);
+      sOutput.setAttributeNS(null, 'id', 't'+key);
+      sOutput.setAttributeNS(null, 'x', data.x);
+      sOutput.setAttributeNS(null, 'y', data.y);
+      sOutput.setAttributeNS(null, 'width', data.width);
+      sOutput.setAttributeNS(null, 'height', data.height);
+      if(data.color) {sOutput.setAttributeNS(null, 'class', 'c'+data.color);}
+      break;
+    default:
+      console.error('Unknown element tag: '+data.tag);
+      break;
+  }
+  return sOutput;
+};
 
 function _vectic_template(params) {
   var _this = this;
@@ -81,27 +145,7 @@ function _vectic_template(params) {
     for(var key in val.elements) {
       var value = val.elements[key];
 
-      switch(value.tag) {
-        case 'circle':
-          if(!(value.r)) {return;}
-          sOutput += '<circle objID="'+key+'" id="#t'+key+'" r="'+value.r+'"';
-          if(value.color) {sOutput+=' class="c'+value.color+'"';}
-          if(value.cx) {sOutput+=' cx="'+value.cx+'"';}
-          if(value.cy) {sOutput+=' cy="'+value.cy+'"';}
-          sOutput += '></circle>';
-          break;
-        case 'rect':
-          if(!(value.width && value.height)) {return;}
-          sOutput += '<rect objID="'+key+'" id="#t'+key+'" width="'+value.width+'" height="'+value.height+'"';
-          if(value.color) {sOutput+=' class="c'+value.color+'"';}
-          if(value.x) {sOutput+=' x="'+value.x+'"';}
-          if(value.y) {sOutput+=' y="'+value.y+'"';}
-          sOutput += '></rect>';
-          break;
-        default:
-          console.error('Unknown element tag: '+value.tag);
-          break;
-      }
+      sOutput += _generateElement(value, key);
       
     //   sOutput += '#p'+_this.id+' .c'+key+' {';
     //   if(value.fill != undefined) {sOutput+='fill:'+value.fill+';';}
@@ -207,6 +251,7 @@ function vectic(params) {
 
   this.objectContainerDom = null;
   this.templateContainerDom = null;
+  this.templateEditContainerDom = null;
   this.paletteContainerDom = null;
 
   this.vecticTemplateHandlers = {};
@@ -262,7 +307,11 @@ function vectic(params) {
   if(!(this.vecticID || this.templateID)) {return console.error('vectic(): missing vecticID or templateID');}
 
   // Generate unique ID to distinguish each vectic object within interface
-  this.rootID = 'v'+(this.vecticID||this.templateID)+'_id'+(_vecticUID+=1);
+  if(this.vecticID) {
+    this.rootID = 'v'+this.vecticID+'_id'+(_vecticUID+=1);
+  } else if(this.templateID) {
+    this.rootID = 't'+this.templateID+'_id'+(_vecticUID+=1);
+  }
 
   // init() is triggered separately so jasmine tests can watch internal functions for testing purposes
   this.init = function() {
@@ -310,6 +359,7 @@ function vectic(params) {
     _this.objectContainerDom = $('svg#'+_this.rootID+' g#objects').get(0);
     _this.templateContainerDom = $('svg#'+_this.rootID+' defs#templates').get(0);
     _this.paletteContainerDom = $('svg#'+_this.rootID+' defs#palettes').get(0);
+    _this.templateEditContainerDom = $('svg#'+_this.rootID+' g#templates_edit').get(0);
   };
 
   this.getObjectsRef = function() {
@@ -346,28 +396,20 @@ function vectic(params) {
   this.setTemplateHooks = function() {
     if(!_this.templateRef) {return console.error('vectic: Could not create hooks, not connected to Database');}
 
-    // Add dummy object to automatically "use" template
-    _this.addObject({
-      key: function() { return 'reference'; },
-      val: function() { return {
-        template: _this.templateID,
-        x: '0',
-        y: '0',
-        width: '0',
-        height: '0',
-      }; },
-    });
-
-    // TODO: Add palette rendering
-
     _this.vecticPalettesRef.off('child_added', _this.addPalette, _this.refError);
     _this.vecticPalettesRef.on('child_added', _this.addPalette, _this.refError);
 
-    _this.templateRef.child('settings').off('value', _this.templateSettingsChange, _this.refError);
-    _this.templateRef.child('settings').on('value', _this.templateSettingsChange, _this.refError);
+    _this.templateRef.child('settings').off('value', _this.settingsChange, _this.refError);
+    _this.templateRef.child('settings').on('value', _this.settingsChange, _this.refError);
 
-    // _this.templateRef.child('elements').off('value', _this.templateElementsChange, _this.refError);
-    _this.templateRef.child('elements').once('value', _this.templateElementsChange, _this.refError);
+    _this.templateRef.child('settings').off('value', _this.saveSettingsLocal, _this.refError);
+    _this.templateRef.child('settings').on('value', _this.saveSettingsLocal, _this.refError);
+
+    _this.templateRef.child('elements').off('child_added', _this.updateTemplateEdit, _this.refError);
+    _this.templateRef.child('elements').on('child_added', _this.updateTemplateEdit, _this.refError);
+
+    _this.templateRef.child('palette').off('value', _this.updateTemplateEditPalette, _this.refError);
+    _this.templateRef.child('palette').on('value', _this.updateTemplateEditPalette, _this.refError);
   };
 
   // Settings hook handlers
@@ -382,18 +424,6 @@ function vectic(params) {
   this.saveSettingsLocal = function(snapshot) {
     _this.dataSettings = snapshot.val();
     _this.updateSizing();
-  };
-
-  this.templateSettingsChange = function(snapshot) {
-    var val = snapshot.val();
-    if(!(val && val.width && val.height)) {return console.error('vectic templateSettingsChange: missing width/height');}
-
-    var viewBox = '0 0 '+val.width+' '+val.height;
-    _this.targetObjectSvg.setAttributeNS(null, 'viewBox', viewBox);
-
-    // reference
-    $('svg#'+_this.rootID+' g#objects use#reference').get(0).setAttributeNS(null, 'width', val.width);
-    $('svg#'+_this.rootID+' g#objects use#reference').get(0).setAttributeNS(null, 'height', val.height);
   };
 
   // Object hook handlers
@@ -439,6 +469,7 @@ function vectic(params) {
     });
   };
 
+
   this.newTemplateDom = function(key) {
     return $('<svg id="t'+key+'"></svg>');
   };
@@ -471,17 +502,58 @@ function vectic(params) {
     if(_this.paletteContainerDom) {$(_this.paletteContainerDom).append(paletteDom);}
 
     if(_this.vecticPaletteHandlers[key]) {_this.vecticPaletteHandlers[key].destroy();}
-    _this.vecticPaletteHandlers[key] = new _this.initPalette({
+    var newObjData = {
       id: paletteid,
       rootid: _this.rootID,
       vecticid: _this.vecticID,
       target: paletteDom,
       path: _this.pathPalette,
-    });
+    };
+    _this.vecticPaletteHandlers[key] = new _this.initPalette(newObjData);
   };
 
   this.newPaletteDom = function(key) {
     return $('<style id="p'+key+'"></style>');
+  };
+
+  this.updateTemplateEditPalette = function(snapshot, prevKey) {
+    var val = snapshot.val();
+    var templateEditSelector = '#'+_this.rootID+' #templates_edit';
+    var templateEdit = $(templateEditSelector);
+
+    if(val) {templateEdit.get(0).setAttributeNS(null, 'class', 'p'+val);}
+  };
+
+  this.updateTemplateEdit = function(snapshot, prevKey) {
+    // TODO: IN PROGRESS: Create/Update template objects in #templates_edit
+    var key = snapshot.key();
+    var val = snapshot.val();
+
+    var templateEditSelector = '#'+_this.rootID+' #templates_edit';
+    var templateEdit = $(templateEditSelector).get(0);
+    var targetSelector = templateEditSelector+' t#'+key;
+    var target = $(targetSelector).get(0);
+
+
+    if(!templateEdit) {return console.error('updateTemplateEdit() unable to find templateEdit "'+templateEditSelector+'"');}
+
+    var output = _generateElementObj(val, key);
+
+    if(!output) {
+      console.error('Failed to build template edit element '+key)
+      console.error(val)
+    }
+    if(!target) {
+      // Append object to parent
+      $(templateEdit).append(output);
+    }
+    else {
+      // Replace existing object
+      $(target).replaceWith(output);
+    }
+
+    // Update root element with NS setting to trigger SVG render update
+    document.querySelector('svg#'+_this.rootID).setAttributeNS(null, 'id', _this.rootID);
   };
 
   // Click controls
