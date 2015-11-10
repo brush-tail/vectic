@@ -337,7 +337,7 @@ describe('vectic()', function () {
     });
     describe('newObjectDom()', function() {
       it('should return a <use> element', function() {
-        expect(outerhtml($(vecticObj.newObjectDom('key1')))).toEqual('<use id="key1"></use>');;
+        expect(outerhtml($(vecticObj.newObjectDom('key1')))).toEqual('<use id="ukey1" objid="key1"></use>');;
       });
     });
 
