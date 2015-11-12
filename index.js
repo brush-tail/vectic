@@ -344,7 +344,7 @@ function vectic(params) {
     // Add css styles and reusable content to <body> if not already added
     if($('body #vecticStyler').length) {return;}
 
-    var vecticStyler = $('<div id="vecticStyler">'+_globalVecticStyler+'</div>');
+    var vecticStyler = $('<style id="vecticStyler">'+_globalVecticStyler+'</style>');
     $('body').append(vecticStyler);
   };
 
