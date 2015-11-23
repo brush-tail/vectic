@@ -47,6 +47,10 @@ var __vecticDBURL = 'http://vecticdev.firebaseio.com/';
 ** standard format for all purpose
 */
 
+
+/* TODO: IN PROGRESS: Move this to vectic.data ? So all content is wrapped up inside controlling object and vecticRoot selector is referable */
+var _vecticData = {};
+
 var _dataWrapper = function(params) {
   params = params || {};
   var id = params.id;
@@ -63,7 +67,7 @@ var _dataWrapper = function(params) {
   if(typeof Firebase != 'undefined') {
     this.firebaseLib = Firebase;
   } else {
-    console.error('_dataWrapper(): could not find Firebase library');
+    return console.error('_dataWrapper(): could not find Firebase library');
   }
 
   // Build connection path as requested by 'type' param
@@ -82,7 +86,6 @@ var _dataWrapper = function(params) {
     },
   });
 
-
   this.save = function() {
     if(!this.def) { return; }
     this.def.$save();
@@ -94,6 +97,7 @@ var _dataWrapper = function(params) {
     > vectic-angular attaches $firebaseObject and $firebaseArray for better angular support?
   */
 };
+
 
 
 
@@ -245,6 +249,8 @@ function _vectic_template(params) {
   };
 
   this.templateDef = new this.firebaseLib(this.path+this.id);
+
+  if(!_vecticData[this.id]) {_vecticData[this.id] = new _dataWrapper({type:'template',id:this.id});}
   // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
   // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
   // this.details = $firebaseObject(this.detailsDef);
@@ -302,6 +308,7 @@ function _vectic_palette(params) {
   this.destroy = function() {};
 
   this.paletteDef = new this.firebaseLib(this.path+this.id);
+  if(!_vecticData[_this.id]) {_vecticData[_this.id] = new _dataWrapper({type:'palette',id:_this.id});}
   // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
   // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
   // this.details = $firebaseObject(this.detailsDef);
@@ -402,6 +409,7 @@ function vectic(params) {
 
     if(_this.vecticID) {
       _this.vecticRef = new _this.firebaseLib(_this.pathVectic+_this.vecticID);
+      if(!_vecticData[_this.vecticID]) {_vecticData[_this.vecticID] = new _dataWrapper({type:'vectic',id:_this.vecticID});}
       _this.vecticObjectsRef = _this.getObjectsRef();
       _this.vecticTemplatesRef = _this.getTemplatesRef();
       _this.vecticPalettesRef = _this.getPalettesRef();
@@ -409,6 +417,7 @@ function vectic(params) {
     }
     else if(_this.templateID) {
       _this.templateRef = new _this.firebaseLib(_this.pathTemplate+_this.templateID);
+      if(!_vecticData[_this.templateID]) {_vecticData[_this.templateID] = new _dataWrapper({type:'template',id:_this.templateID});}
       _this.vecticPalettesRef = _this.getPalettesRef();
       _this.setTemplateHooks();
     }
