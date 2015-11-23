@@ -31,6 +31,10 @@ function outerhtml(jqObj) {
   return $('<div>').append(jqObj.clone()).html();
 }
 
+xdescribe('_dataWrapper()', function() {
+  // TODO:
+});
+
 describe('vectic()', function () {
   var vecticObj, vecticTargetMock, vecticParamsMock, templateParamsMock, firebaseLibMock, firebaseLibMockObj;
 

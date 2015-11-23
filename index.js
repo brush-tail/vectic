@@ -13,7 +13,7 @@
 var _vecticUID = 0;
 
 var _htmlBoiler = '\
-<span class="svgContainer">\
+<span class="svg`tainer">\
   <svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="{{ROOTID}}">\
     <defs id="palettes"></defs>\
     <defs id="templates"></defs>\
@@ -37,6 +37,82 @@ var _globalVecticStyler = '\
 }\
 ';
 
+var __vecticDBURL = 'http://vecticdev.firebaseio.com/';
+
+
+/*
+** TODO: Restructure sub object fetching/storing locally
+** to be encapsulated in a "new object" which can be returned
+** to jquery or angular as well as click functions in one
+** standard format for all purpose
+*/
+
+var _dataWrapper = function(params) {
+  params = params || {};
+  var id = params.id;
+  var type = params.type;
+  var _this = this;
+  this.id = 't'+id;
+  this.objid = id;
+  this.path = '';
+
+  this.ref = null;
+  this.val = null;
+
+  // Create firebase library link
+  if(typeof Firebase != 'undefined') {
+    this.firebaseLib = Firebase;
+  } else {
+    console.error('_dataWrapper(): could not find Firebase library');
+  }
+
+  // Build connection path as requested by 'type' param
+  if(type=='vectic')        { this.path = __vecticDBURL+'vectic/'; }
+  else if(type=='template') { this.path = __vecticDBURL+'template/'; }
+  else if(type=='palette')  { this.path = __vecticDBURL+'palette/'; }
+  else { return console.error('vectic _dataWrapper() unsupported type: '+type); }
+
+  // Populate ref
+  this.ref = new this.firebaseLib(this.path+id);
+
+  // Value processor
+  Object.defineProperty(this, 'val', {
+    get: function() {
+      if(_this.def) { return _this.def.val(); }
+    },
+  });
+
+
+  this.save = function() {
+    if(!this.def) { return; }
+    this.def.$save();
+  };
+
+  /*
+    DOM
+
+    > vectic-angular attaches $firebaseObject and $firebaseArray for better angular support?
+  */
+};
+
+
+
+var _vecticTags = [
+  'circle',
+  'rect',
+];
+var _vecticTagAttributes = [{
+  id: 'id',     val: function(data, key) { return 't'+key; } },{
+  id: 'objid',  val: function(data, key) { return key; } },{
+  id: 'class',  val: function(data, key) { return 'c'+data.color; } },{
+  id: 'r',      val: function(data, key) { return data.r; } },{
+  id: 'cx',     val: function(data, key) { return data.cx; } },{
+  id: 'cy',     val: function(data, key) { return data.cy; } },{
+  id: 'x',      val: function(data, key) { return data.x; } },{
+  id: 'y',      val: function(data, key) { return data.y; } },{
+  id: 'width',  val: function(data, key) { return data.width; } },{
+  id: 'height', val: function(data, key) { return data.height; } },];
+
 function _refError(params) {
   // TODO: Handle Firebase error messages
   console.error('Firebase refError()');
@@ -47,63 +123,66 @@ function _generateElement(data, key) {
   if(!data) {return console.error('_generateElement missing data');}
   if(!key) {return console.error('_generateElement missing key');}
 
-  var sOutput = '';
-  switch(data.tag) {
-    case 'circle':
-      if(!(data.r && data.cx && data.cy)) {return;}
-      sOutput += '<circle objid="'+key+'" id="t'+key+'" r="'+data.r+'"';
-      if(data.color) {sOutput+=' class="c'+data.color+'"';}
-      if(data.cx) {sOutput+=' cx="'+data.cx+'"';}
-      if(data.cy) {sOutput+=' cy="'+data.cy+'"';}
-      sOutput += '></circle>';
-      break;
-    case 'rect':
-      if(!(data.x && data.y && data.width && data.height)) {return;}
-      sOutput += '<rect objid="'+key+'" id="t'+key+'" width="'+data.width+'" height="'+data.height+'"';
-      if(data.color) {sOutput+=' class="c'+data.color+'"';}
-      if(data.x) {sOutput+=' x="'+data.x+'"';}
-      if(data.y) {sOutput+=' y="'+data.y+'"';}
-      sOutput += '></rect>';
-      break;
-    default:
-      console.error('Unknown element tag: '+data.tag);
-      break;
+  if(_vecticTags.indexOf(data.tag)<0) {return console.error('_generateElementObj tag "'+data.tag+'" not supported');}
+
+  var output = '';
+
+  output+='<'+data.tag;
+  for(var i in _vecticTagAttributes) {
+    var att = _vecticTagAttributes[i];
+    var id = att.id;
+    var val = att.val(data, key);
+    var ns = att.ns || null;
+    if([null, undefined].indexOf(val)<0) {
+      output+=' '
+      if(ns) { output+=ns+':'; }
+      output+=id+'="'+val+'"';
+    }
   }
-  return sOutput;
+  output+='></'+data.tag+'>';
+
+  // switch(data.tag) {
+  //   case 'circle':
+  //     if(!(data.r && data.cx && data.cy)) {return;}
+  //     output += '<circle objid="'+key+'" id="t'+key+'" r="'+data.r+'"';
+  //     if(data.color) {output+=' class="c'+data.color+'"';}
+  //     if(data.cx) {output+=' cx="'+data.cx+'"';}
+  //     if(data.cy) {output+=' cy="'+data.cy+'"';}
+  //     output += '></circle>';
+  //     break;
+  //   case 'rect':
+  //     if(!(data.x && data.y && data.width && data.height)) {return;}
+  //     output += '<rect objid="'+key+'" id="t'+key+'" width="'+data.width+'" height="'+data.height+'"';
+  //     if(data.color) {output+=' class="c'+data.color+'"';}
+  //     if(data.x) {output+=' x="'+data.x+'"';}
+  //     if(data.y) {output+=' y="'+data.y+'"';}
+  //     output += '></rect>';
+  //     break;
+  //   default:
+  //     console.error('Unknown element tag: '+data.tag);
+  //     break;
+  // }
+  return output;
 };
 
 function _generateElementObj(data, key) {
-  if(!data) {return console.error('_generateElement missing data');}
-  if(!key) {return console.error('_generateElement missing key');}
+  if(!data) {return console.error('_generateElementObj missing data');}
+  if(!key) {return console.error('_generateElementObj missing key');}
 
-  var sOutput = '';
-  switch(data.tag) {
-    case 'circle':
-      if(!(data.r && data.cx && data.cy)) {return;}
-      sOutput = document.createElementNS('http://www.w3.org/2000/svg', ('circle'));
-      sOutput.setAttributeNS(null, 'objid', key);
-      sOutput.setAttributeNS(null, 'id', 't'+key);
-      sOutput.setAttributeNS(null, 'r', data.r);
-      sOutput.setAttributeNS(null, 'cx', data.cx);
-      sOutput.setAttributeNS(null, 'cy', data.cy);
-      if(data.color) {sOutput.setAttributeNS(null, 'class', 'c'+data.color);}
-      break;
-    case 'rect':
-      if(!(data.x && data.y && data.width && data.height)) {return;}
-      sOutput = document.createElementNS('http://www.w3.org/2000/svg', ('rect'));
-      sOutput.setAttributeNS(null, 'objid', key);
-      sOutput.setAttributeNS(null, 'id', 't'+key);
-      sOutput.setAttributeNS(null, 'x', data.x);
-      sOutput.setAttributeNS(null, 'y', data.y);
-      sOutput.setAttributeNS(null, 'width', data.width);
-      sOutput.setAttributeNS(null, 'height', data.height);
-      if(data.color) {sOutput.setAttributeNS(null, 'class', 'c'+data.color);}
-      break;
-    default:
-      console.error('Unknown element tag: '+data.tag);
-      break;
+  if(_vecticTags.indexOf(data.tag)<0) {return console.error('_generateElementObj tag "'+data.tag+'" not supported');}
+
+  var output = document.createElementNS('http://www.w3.org/2000/svg', (data.tag));
+  for(var i in _vecticTagAttributes) {
+    var att = _vecticTagAttributes[i];
+    var id = att.id;
+    var val = att.val(data, key);
+    var ns = att.ns || null;
+    if([null, undefined].indexOf(val)<0) {
+      output.setAttributeNS(ns, id, val);
+    }
   }
-  return sOutput;
+
+  return output;
 };
 
 function _vectic_template(params) {
@@ -291,7 +370,7 @@ function vectic(params) {
   }
 
   Object.defineProperty(this, 'pathBase', {
-    get: function() {return 'http://vecticdev.firebaseio.com/';},
+    get: function() {return __vecticDBURL;},
   });
   Object.defineProperty(this, 'pathVectic', {
     get: function() {return this.pathBase+'vectic/';},
