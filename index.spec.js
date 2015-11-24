@@ -88,13 +88,13 @@ describe('vectic()', function () {
     vecticObj = new vectic({
       vecticID: 'vectic1',
     });
-    expect(vecticObj.rootID).toEqual(undefined);
+    expect(vecticObj.rootID).toEqual(null);
   });
   it('should exit and fail if vecticID is missing', function() {
     vecticObj = new vectic({
       target: vecticTargetMock,
     });
-    expect(vecticObj.rootID).toEqual(undefined);
+    expect(vecticObj.rootID).toEqual(null);
   });
 
   // Preset values
@@ -373,7 +373,6 @@ describe('vectic()', function () {
         expect(vecticObj.initTemplate).toHaveBeenCalledWith({
           id: 'template1',
           vecticid: 'vectic1',
-          rootid: 'testRootID',
           target: templateDomMock,
           path: 'http://vecticdev.firebaseio.com/template/',
         });

@@ -37,8 +37,6 @@ var _globalVecticStyler = '\
 }\
 ';
 
-var __vecticDBURL = 'http://vecticdev.firebaseio.com/';
-
 
 /*
 ** TODO: Restructure sub object fetching/storing locally
@@ -47,59 +45,8 @@ var __vecticDBURL = 'http://vecticdev.firebaseio.com/';
 ** standard format for all purpose
 */
 
-
-/* TODO: IN PROGRESS: Move this to vectic.data ? So all content is wrapped up inside controlling object and vecticRoot selector is referable */
+// Global vectic _dataWrapper reference library
 var _vecticData = {};
-
-var _dataWrapper = function(params) {
-  params = params || {};
-  var id = params.id;
-  var type = params.type;
-  var _this = this;
-  this.id = 't'+id;
-  this.objid = id;
-  this.path = '';
-
-  this.ref = null;
-  this.val = null;
-
-  // Create firebase library link
-  if(typeof Firebase != 'undefined') {
-    this.firebaseLib = Firebase;
-  } else {
-    return console.error('_dataWrapper(): could not find Firebase library');
-  }
-
-  // Build connection path as requested by 'type' param
-  if(type=='vectic')        { this.path = __vecticDBURL+'vectic/'; }
-  else if(type=='template') { this.path = __vecticDBURL+'template/'; }
-  else if(type=='palette')  { this.path = __vecticDBURL+'palette/'; }
-  else { return console.error('vectic _dataWrapper() unsupported type: '+type); }
-
-  // Populate ref
-  this.ref = new this.firebaseLib(this.path+id);
-
-  // Value processor
-  Object.defineProperty(this, 'val', {
-    get: function() {
-      if(_this.def) { return _this.def.val(); }
-    },
-  });
-
-  this.save = function() {
-    if(!this.def) { return; }
-    this.def.$save();
-  };
-
-  /*
-    DOM
-
-    > vectic-angular attaches $firebaseObject and $firebaseArray for better angular support?
-  */
-};
-
-
-
 
 var _vecticTags = [
   'circle',
@@ -123,205 +70,11 @@ function _refError(params) {
   console.error(params);
 }
 
-function _generateElement(data, key) {
-  if(!data) {return console.error('_generateElement missing data');}
-  if(!key) {return console.error('_generateElement missing key');}
-
-  if(_vecticTags.indexOf(data.tag)<0) {return console.error('_generateElementObj tag "'+data.tag+'" not supported');}
-
-  var output = '';
-
-  output+='<'+data.tag;
-  for(var i in _vecticTagAttributes) {
-    var att = _vecticTagAttributes[i];
-    var id = att.id;
-    var val = att.val(data, key);
-    var ns = att.ns || null;
-    if([null, undefined].indexOf(val)<0) {
-      output+=' '
-      if(ns) { output+=ns+':'; }
-      output+=id+'="'+val+'"';
-    }
-  }
-  output+='></'+data.tag+'>';
-
-  // switch(data.tag) {
-  //   case 'circle':
-  //     if(!(data.r && data.cx && data.cy)) {return;}
-  //     output += '<circle objid="'+key+'" id="t'+key+'" r="'+data.r+'"';
-  //     if(data.color) {output+=' class="c'+data.color+'"';}
-  //     if(data.cx) {output+=' cx="'+data.cx+'"';}
-  //     if(data.cy) {output+=' cy="'+data.cy+'"';}
-  //     output += '></circle>';
-  //     break;
-  //   case 'rect':
-  //     if(!(data.x && data.y && data.width && data.height)) {return;}
-  //     output += '<rect objid="'+key+'" id="t'+key+'" width="'+data.width+'" height="'+data.height+'"';
-  //     if(data.color) {output+=' class="c'+data.color+'"';}
-  //     if(data.x) {output+=' x="'+data.x+'"';}
-  //     if(data.y) {output+=' y="'+data.y+'"';}
-  //     output += '></rect>';
-  //     break;
-  //   default:
-  //     console.error('Unknown element tag: '+data.tag);
-  //     break;
-  // }
-  return output;
-};
-
-function _generateElementObj(data, key) {
-  if(!data) {return console.error('_generateElementObj missing data');}
-  if(!key) {return console.error('_generateElementObj missing key');}
-
-  if(_vecticTags.indexOf(data.tag)<0) {return console.error('_generateElementObj tag "'+data.tag+'" not supported');}
-
-  var output = document.createElementNS('http://www.w3.org/2000/svg', (data.tag));
-  for(var i in _vecticTagAttributes) {
-    var att = _vecticTagAttributes[i];
-    var id = att.id;
-    var val = att.val(data, key);
-    var ns = att.ns || null;
-    if([null, undefined].indexOf(val)<0) {
-      output.setAttributeNS(ns, id, val);
-    }
-  }
-
-  return output;
-};
-
-function _vectic_template(params) {
-  var _this = this;
-  this.refError = _refError;
-  params = params || {};
-  this.id = params.id || null;
-  // this.vecticid = params.vecticid || null;
-  this.target = params.target || null;
-  this.path = params.path || null;
-
-  if(!this.id)           { return console.error('vectic_template(): No ID supplied'); }
-  // if(!this.vecticid)     { return console.error('vectic_template(): No Vectic ID supplied'); }
-  if(!this.target)       { return console.error('vectic_template(): No Target template element supplied'); }
-  if(!this.path)     { return console.error('vectic_template(): No path supplied'); }
-  if(this.target && !this.target.html)  { return console.error('vectic_template(): Target is not correct JQuery DOM object'); }
-
-  // Get Firebase if available
-  if(typeof Firebase != 'undefined') {
-    this.firebaseLib = Firebase;
-  } else {
-    console.error('_vectic_template(): could not find Firebase library');
-  }
-
-  this.onValue = function(snapshot, prevChildKey) {
-    var val = snapshot.val();
-    var elementKey = snapshot.key();
-
-    if(!(val && val.settings && val.settings.width && val.settings.height && val.elements)) {return console.error('template '+elementKey+' incomplete');}
-
-    // Set viewBox
-    var viewBox = '0 0 '+val.settings.width+' '+val.settings.height;
-    _this.target.get(0).setAttributeNS(null, 'viewBox', viewBox);
-
-    // Set palette
-    if(val.palette) {_this.target.get(0).setAttributeNS(null, 'class', 'p'+val.palette);}
-
-    var sOutput = '';
-    for(var key in val.elements) {
-      var value = val.elements[key];
-
-      sOutput += _generateElement(value, key);
-      
-    //   sOutput += '#p'+_this.id+' .c'+key+' {';
-    //   if(value.fill != undefined) {sOutput+='fill:'+value.fill+';';}
-    //   if(value.stroke != undefined) {sOutput+='stroke:'+value.stroke+';';}
-    //   if(value['stroke-width'] != undefined) {sOutput+='stroke-width:'+value['stroke-width']+';';}
-    //   sOutput += '} ';
-    }
-
-    _this.target.html(sOutput);
-    if(params.rootid) {
-      // Update root element with NS setting to trigger SVG render update
-      document.querySelector('svg#'+params.rootid).setAttributeNS(null, 'id', params.rootid);
-    }
-  };
-
-  this.destroy = function() {
-    // TODO: Disconnect from database, remove watchers, destory what we can
-  };
-
-  this.templateDef = new this.firebaseLib(this.path+this.id);
-
-  if(!_vecticData[this.id]) {_vecticData[this.id] = new _dataWrapper({type:'template',id:this.id});}
-  // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
-  // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
-  // this.details = $firebaseObject(this.detailsDef);
-  
-  // this.templateDef.once('value', this.onValue);
-  this.templateDef.on('value', this.onValue, this.refError);
-}
-
-function _vectic_palette(params) {
-  var _this = this;
-  this.refError = _refError;
-  params = params || {};
-  this.id = params.id || null;
-  // this.vecticid = params.vecticid || null;
-  this.target = params.target || null;
-  this.path = params.path || null;
-
-  if(!this.id)            { return console.error('vectic_palette(): No ID supplied'); }
-  // if(!this.vecticid)      { return console.error('vectic_palette(): No Vectic ID supplied'); }
-  if(!this.target)        { return console.error('vectic_palette(): No Target palette element supplied'); }
-  if(!this.path)          { return console.error('vectic_palette(): No path supplied'); }
-  if(this.target && 
-    !this.target.html)    { return console.error('vectic_palette(): Target is not correct JQuery DOM object'); }
-
-  // Get Firebase if available
-  if(typeof Firebase != 'undefined') {
-    this.firebaseLib = Firebase;
-  } else {
-    console.error('_vectic_palette(): could not find Firebase library');
-  }
-
-  this.onValue = function(snapshot, prevChildKey) {
-
-    var val = snapshot.val();
-    if(!val && val.colors) {return;}
-
-    var sOutput = '';
-    for(var key in val.colors) {
-      var value = val.colors[key];
-      
-      sOutput += '.p'+_this.id+' .c'+key+' {';
-      if(value.fill != undefined) {sOutput+='fill:'+value.fill+';';}
-      if(value.stroke != undefined) {sOutput+='stroke:'+value.stroke+';';}
-      if(value['stroke-width'] != undefined) {sOutput+='stroke-width:'+value['stroke-width']+';';}
-      sOutput += '} ';
-    }
-
-    _this.target.html(sOutput);
-    if(params.rootid) {
-      // Update root element with NS setting to trigger SVG render update
-      document.querySelector('svg#'+params.rootid).setAttributeNS(null, 'id', params.rootid);
-    }
-  };
-
-  this.destroy = function() {};
-
-  this.paletteDef = new this.firebaseLib(this.path+this.id);
-  if(!_vecticData[_this.id]) {_vecticData[_this.id] = new _dataWrapper({type:'palette',id:_this.id});}
-  // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
-  // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
-  // this.details = $firebaseObject(this.detailsDef);
-  
-  // this.paletteDef.once('value', this.onValue);
-  this.paletteDef.on('value', this.onValue, this.refError);
-}
-
-
 function vectic(params) {
   // Define
   params = params || {};
   var _this = this;
+  this.rootID = null;
   this.refError = _refError;
   this.targetObject = params.target;
   this.targetObjectSvg = null;
@@ -377,7 +130,7 @@ function vectic(params) {
   }
 
   Object.defineProperty(this, 'pathBase', {
-    get: function() {return __vecticDBURL;},
+    get: function() {return 'http://vecticdev.firebaseio.com/';},
   });
   Object.defineProperty(this, 'pathVectic', {
     get: function() {return this.pathBase+'vectic/';},
@@ -388,6 +141,236 @@ function vectic(params) {
   Object.defineProperty(this, 'pathPalette', {
     get: function() {return this.pathBase+'palette/';},
   });
+
+  // Data Object creators/wrappers
+  var _dataWrapper = function(params) {
+    params = params || {};
+    var _thisDataWrapper = this;
+    this.id = null;
+    this.type = params.type;
+    this.path = '';
+    this.objID = params.id;
+    this.rootID = _this.rootID;
+
+    this.ref = null;
+    this.val = null;
+
+    // Create firebase library link
+    if(!_this.firebaseLib) { return console.error('_dataWrapper: firebaseLib not found'); }
+
+    // Build connection path as requested by 'type' param
+    if(this.type=='vectic')        {
+      this.path = _this.pathVectic;
+      this.id = 'v'+this.objID;
+    }
+    else if(this.type=='template') {
+      this.path = _this.pathTemplate;
+      this.id = 't'+this.objID;
+    }
+    else if(this.type=='palette')  {
+      this.path = _this.pathPalette;
+      this.id = 'p'+this.objID;
+    }
+    else { return console.error('vectic _dataWrapper() unsupported type: '+this.type); }
+
+    // Populate ref
+    this.ref = new _this.firebaseLib(this.path+this.objID);
+
+    // Value processor
+    Object.defineProperty(this, 'val', {
+      get: function() {
+        if(_thisDataWrapper.ref) { return _thisDataWrapper.ref.val(); }
+      },
+    });
+
+    // Save data
+    this.save = function() {
+      if(!this.ref) { return; }
+      this.ref.$save();
+    };
+
+    // JQuery HTML DOM Selector
+    this.dom = $('svg#'+_this.rootID+' #'+this.id);
+
+    /*
+      > vectic-angular attaches $firebaseObject and $firebaseArray for better angular support?
+    */
+  };
+
+
+  var _generateElement = function(data, key) {
+    if(!data) {return console.error('_generateElement missing data');}
+    if(!key) {return console.error('_generateElement missing key');}
+
+    if(_vecticTags.indexOf(data.tag)<0) {return console.error('_generateElementObj tag "'+data.tag+'" not supported');}
+
+    var output = '';
+
+    output+='<'+data.tag;
+    for(var i in _vecticTagAttributes) {
+      var att = _vecticTagAttributes[i];
+      var id = att.id;
+      var val = att.val(data, key);
+      var ns = att.ns || null;
+      if([null, undefined].indexOf(val)<0) {
+        output+=' '
+        if(ns) { output+=ns+':'; }
+        output+=id+'="'+val+'"';
+      }
+    }
+    output+='></'+data.tag+'>';
+
+    return output;
+  };
+
+  var _generateElementObj = function(data, key) {
+    if(!data) {return console.error('_generateElementObj missing data');}
+    if(!key) {return console.error('_generateElementObj missing key');}
+
+    if(_vecticTags.indexOf(data.tag)<0) {return console.error('_generateElementObj tag "'+data.tag+'" not supported');}
+
+    var output = document.createElementNS('http://www.w3.org/2000/svg', (data.tag));
+    for(var i in _vecticTagAttributes) {
+      var att = _vecticTagAttributes[i];
+      var id = att.id;
+      var val = att.val(data, key);
+      var ns = att.ns || null;
+      if([null, undefined].indexOf(val)<0) {
+        output.setAttributeNS(ns, id, val);
+      }
+    }
+
+    return output;
+  };
+
+  var _vectic_template = function(params) {
+    var _thisVecticTemplate = this;
+    this.refError = _refError;
+    params = params || {};
+    this.id = params.id || null;
+    // this.vecticid = params.vecticid || null;
+    this.target = params.target || null;
+    this.path = params.path || null;
+
+    if(!this.id)           { return console.error('vectic_template(): No ID supplied'); }
+    // if(!this.vecticid)     { return console.error('vectic_template(): No Vectic ID supplied'); }
+    if(!this.target)       { return console.error('vectic_template(): No Target template element supplied'); }
+    if(!this.path)     { return console.error('vectic_template(): No path supplied'); }
+    if(this.target && !this.target.html)  { return console.error('vectic_template(): Target is not correct JQuery DOM object'); }
+
+    // Get Firebase if available
+    if(typeof Firebase != 'undefined') {
+      this.firebaseLib = Firebase;
+    } else {
+      console.error('_vectic_template(): could not find Firebase library');
+    }
+
+    this.onValue = function(snapshot, prevChildKey) {
+      var val = snapshot.val();
+      var elementKey = snapshot.key();
+
+      if(!(val && val.settings && val.settings.width && val.settings.height && val.elements)) {return console.error('template '+elementKey+' incomplete');}
+
+      // Set viewBox
+      var viewBox = '0 0 '+val.settings.width+' '+val.settings.height;
+      _thisVecticTemplate.target.get(0).setAttributeNS(null, 'viewBox', viewBox);
+
+      // Set palette
+      if(val.palette) {_thisVecticTemplate.target.get(0).setAttributeNS(null, 'class', 'p'+val.palette);}
+
+      var sOutput = '';
+      for(var key in val.elements) {
+        var value = val.elements[key];
+
+        sOutput += _generateElement(value, key);
+        
+      //   sOutput += '#p'+_thisVecticTemplate.id+' .c'+key+' {';
+      //   if(value.fill != undefined) {sOutput+='fill:'+value.fill+';';}
+      //   if(value.stroke != undefined) {sOutput+='stroke:'+value.stroke+';';}
+      //   if(value['stroke-width'] != undefined) {sOutput+='stroke-width:'+value['stroke-width']+';';}
+      //   sOutput += '} ';
+      }
+
+      _thisVecticTemplate.target.html(sOutput);
+      if(_this.rootID) {
+        // Update root element with NS setting to trigger SVG render update
+        document.querySelector('svg#'+_this.rootID).setAttributeNS(null, 'id', _this.rootID);
+      }
+    };
+
+    this.destroy = function() {
+      // TODO: Disconnect from database, remove watchers, destory what we can
+    };
+
+    this.templateDef = new this.firebaseLib(this.path+this.id);
+
+    // TODO: Problem
+    if(!_vecticData[this.id]) {_vecticData[this.id] = new _dataWrapper({type:'template',id:this.id});}
+    // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
+    // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
+    // this.details = $firebaseObject(this.detailsDef);
+    
+    // this.templateDef.once('value', this.onValue);
+    this.templateDef.on('value', this.onValue, this.refError);
+  };
+
+  var _vectic_palette = function(params) {
+    var _this = this;
+    this.refError = _refError;
+    params = params || {};
+    this.id = params.id || null;
+    // this.vecticid = params.vecticid || null;
+    this.target = params.target || null;
+    this.path = params.path || null;
+
+    if(!this.id)            { return console.error('vectic_palette(): No ID supplied'); }
+    // if(!this.vecticid)      { return console.error('vectic_palette(): No Vectic ID supplied'); }
+    if(!this.target)        { return console.error('vectic_palette(): No Target palette element supplied'); }
+    if(!this.path)          { return console.error('vectic_palette(): No path supplied'); }
+    if(this.target && 
+      !this.target.html)    { return console.error('vectic_palette(): Target is not correct JQuery DOM object'); }
+
+    // Get Firebase if available
+    if(typeof Firebase != 'undefined') {
+      this.firebaseLib = Firebase;
+    } else {
+      console.error('_vectic_palette(): could not find Firebase library');
+    }
+
+    this.onValue = function(snapshot, prevChildKey) {
+
+      var val = snapshot.val();
+      if(!val && val.colors) {return;}
+
+      var sOutput = '';
+      for(var key in val.colors) {
+        var value = val.colors[key];
+        
+        sOutput += '.p'+_this.id+' .c'+key+' {';
+        if(value.fill != undefined) {sOutput+='fill:'+value.fill+';';}
+        if(value.stroke != undefined) {sOutput+='stroke:'+value.stroke+';';}
+        if(value['stroke-width'] != undefined) {sOutput+='stroke-width:'+value['stroke-width']+';';}
+        sOutput += '} ';
+      }
+
+      _this.target.html(sOutput);
+      if(_this.rootID) {
+        // Update root element with NS setting to trigger SVG render update
+        document.querySelector('svg#'+_this.rootID).setAttributeNS(null, 'id', _this.rootID);
+      }
+    };
+
+    this.destroy = function() {};
+
+    this.paletteDef = new this.firebaseLib(this.path+this.id);
+    if(!_vecticData[_this.id]) {_vecticData[_this.id] = new _dataWrapper({type:'palette',id:_this.id});}
+    // this.queueDef = params.queueDef || new Firebase(this.pathQueue);
+    // this.detailsDef = params.detailDef || new Firebase(this.pathDetail+this.id);
+    // this.details = $firebaseObject(this.detailsDef);
+    
+    // this.paletteDef.once('value', this.onValue);
+    this.paletteDef.on('value', this.onValue, this.refError);
+  };
 
   if(!(this.targetObject && this.targetObject.html)) {return console.error('vectic(): missing target jQuery object');}
   if(!(this.vecticID || this.templateID)) {return console.error('vectic(): missing vecticID or templateID');}
@@ -561,7 +544,6 @@ function vectic(params) {
     if(_this.vecticTemplateHandlers[key]) {_this.vecticTemplateHandlers[key].destroy();}
     _this.vecticTemplateHandlers[key] = new _this.initTemplate({
       id: templateid,
-      rootid: _this.rootID,
       vecticid: _this.vecticID,
       target: templateDom,
       path: _this.pathTemplate,
@@ -583,7 +565,6 @@ function vectic(params) {
     if(_this.vecticTemplateHandlers[key]) {_this.vecticTemplateHandlers[key].destroy();}
     _this.vecticTemplateHandlers[_this.templateID] = new _this.initTemplate({
       id: _this.templateID,
-      rootid: _this.rootID,
       // vecticid: _this.templateID,
       target: templateDom,
       path: _this.pathTemplate,
@@ -603,7 +584,6 @@ function vectic(params) {
     if(_this.vecticPaletteHandlers[key]) {_this.vecticPaletteHandlers[key].destroy();}
     var newObjData = {
       id: paletteid,
-      rootid: _this.rootID,
       vecticid: _this.vecticID,
       target: paletteDom,
       path: _this.pathPalette,
@@ -720,6 +700,10 @@ function vectic(params) {
 
     // Layer click (only when vectic id supplied)
     $('svg#'+_this.rootID).on('click', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -728,6 +712,10 @@ function vectic(params) {
       _this.clickObject(params);
     });
     $('svg#'+_this.rootID).on('mousemove', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -736,6 +724,10 @@ function vectic(params) {
       _this.moveObject(params);
     });
     $('svg#'+_this.rootID).on('mouseenter', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -744,6 +736,10 @@ function vectic(params) {
       _this.enterObject(params);
     });
     $('svg#'+_this.rootID).on('mouseleave', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -752,6 +748,10 @@ function vectic(params) {
       _this.leaveObject(params);
     });
     $('svg#'+_this.rootID).on('scroll', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -760,6 +760,10 @@ function vectic(params) {
       _this.scrollObject(params);
     });
     $('svg#'+_this.rootID).on('mouseup', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -768,6 +772,10 @@ function vectic(params) {
       _this.mouseupObject(params);
     });
     $('svg#'+_this.rootID).on('mousedown', 'use', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -779,6 +787,10 @@ function vectic(params) {
 
     // Layer click (only when vectic id supplied)
     $('svg#'+_this.rootID+' #templates_edit').on('click', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -787,6 +799,10 @@ function vectic(params) {
       _this.clickObject(params);
     });
     $('svg#'+_this.rootID+' #templates_edit').on('mousemove', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -795,6 +811,10 @@ function vectic(params) {
       _this.moveObject(params);
     });
     $('svg#'+_this.rootID+' #templates_edit').on('mouseenter', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -803,6 +823,10 @@ function vectic(params) {
       _this.enterObject(params);
     });
     $('svg#'+_this.rootID+' #templates_edit').on('mouseleave', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -811,6 +835,10 @@ function vectic(params) {
       _this.leaveObject(params);
     });
     $('svg#'+_this.rootID+' #templates_edit').on('scroll', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -819,6 +847,10 @@ function vectic(params) {
       _this.scrollObject(params);
     });
     $('svg#'+_this.rootID+' #templates_edit').on('mouseup', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
@@ -827,6 +859,10 @@ function vectic(params) {
       _this.mouseupObject(params);
     });
     $('svg#'+_this.rootID+' #templates_edit').on('mousedown', '*', function(event) {
+      console.log('mouse:')
+      console.log(this)
+      console.log($(this).attr('objid'))
+      console.log(_vecticData)
       var params = {
         event: event,
         this: this,
