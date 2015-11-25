@@ -1,4 +1,31 @@
-var dataWrapperItems = {};   // dataWrapper() objects refered by: '{type}_{id}'. e.g. 'template_abcd01'
+var _vecticUID = 0;
+
+var _htmlBoiler = '\
+<span class="svg`tainer">\
+  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="{{ROOTID}}">\
+    <defs id="palettes"></defs>\
+    <defs id="templates"></defs>\
+    <g id="objects"></g>\
+    <g id="templates_edit"></g>\
+  </svg>\
+</span>\
+';
+
+var _globalVecticStyler = '\
+.svgContainer {\
+  -webkit-touch-callout: none !important;\
+  -webkit-user-select: none !important;\
+  -khtml-user-select: none !important;\
+  -moz-user-select: none !important;\
+  -ms-user-select: none !important;\
+  user-select: none !important;\
+}\
+.svgContainer svg:not([width]) {\
+  width: 100% !important;\
+}\
+';
+
+var _dataWrapperItems = {};   // dataWrapper() objects refered by: '{type}_{id}'. e.g. 'template_abcd01'
 
 function vectic(vecticParams) {
   vecticParams = vecticParams || {};
@@ -6,6 +33,7 @@ function vectic(vecticParams) {
   _vectic.id = vecticParams.id;
   _vectic.type = vecticParams.type || 'vectic';
   _vectic.rootElementId = null;
+  _vectic.targetObject = vecticParams.target;
 
   _vectic.Firebase = Firebase;
   if(!_vectic.Firebase) { return console.error('vectic(): could not find Firebase library'); }
@@ -15,6 +43,30 @@ function vectic(vecticParams) {
 
   _vectic.connect = function() {
     _vectic.firebaseRef = new _vectic.Firebase(_vectic.pathBase);
+  };
+
+  _vectic.initStyles = function() {
+    console.log('_vectic.initStyles')
+    // Add css styles and reusable content to <body> if not already added
+    if($('body #vecticStyler').length) {return;}
+
+    var vecticStyler = $('<style id="vecticStyler">'+_globalVecticStyler+'</style>');
+    $('body').append(vecticStyler);
+  };
+
+  _vectic.initHTML = function() {
+    console.log('_vectic.initHTML')
+    if(!_vectic.targetObject) {return console.error('vectic: Target object missing');}
+    _vectic.targetObject.html(_htmlBoiler.replace('{{ROOTID}}', _vectic.rootID));
+    _vectic.targetObjectSvg = ($(_vectic.targetObject)).find('svg').get(0);
+  };
+
+  _vectic.getDoms = function() {
+    console.log('_vectic.getDoms')
+    _vectic.objectContainerDom = $('svg#'+_vectic.rootID+' g#objects').get(0);
+    _vectic.templateContainerDom = $('svg#'+_vectic.rootID+' defs#templates').get(0);
+    _vectic.paletteContainerDom = $('svg#'+_vectic.rootID+' defs#palettes').get(0);
+    _vectic.templateEditContainerDom = $('svg#'+_vectic.rootID+' g#templates_edit').get(0);
   };
 
   _vectic.dataWrapper = function(dataWrapperParams) {
@@ -135,6 +187,27 @@ function vectic(vecticParams) {
     if(!_dataWrapper.elementId) { return console.error('vectic.dataWrapper() missing "elementId"'); }
 
     // TODO:
-    dataWrapperItems[_dataWrapper.elementId] = _dataWrapper;
+    _dataWrapperItems[_dataWrapper.elementId] = _dataWrapper;
+  };
+
+  _vectic.init = function() {
+    if(!_vectic.Firebase) {return console.error('vectic.init(): Missing Firebase library');}
+    _vectic.initStyles();
+    _vectic.initHTML();
+    _vectic.getDoms();
+
+    if(_vectic.id) {
+      // TODO: 
+      var newWrapper = new _vectic.dataWrapper({
+        id: _vectic.id,
+        type: 'vectic',
+      });
+    }
+
+    // TODO:
+  };
+
+  _vectic.getObjectsRef = function() {
+    console.log('TODO: Stop calling _vectic.getObjectsRef! OR, you know, code this function');
   };
 }
