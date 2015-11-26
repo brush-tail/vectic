@@ -27,13 +27,37 @@ var _globalVecticStyler = '\
 
 var _dataWrapperItems = {};   // dataWrapper() objects refered by: '{type}_{id}'. e.g. 'template_abcd01'
 
+var _vecticTags = [
+  'circle',
+  'rect',
+];
+var _vecticTagAttributes = [{
+  id: 'id',     val: function(data, key) { return 't'+key; } },{
+  id: 'objid',  val: function(data, key) { return key; } },{
+  id: 'class',  val: function(data, key) { return 'c'+data.color; } },{
+  id: 'r',      val: function(data, key) { return data.r; } },{
+  id: 'cx',     val: function(data, key) { return data.cx; } },{
+  id: 'cy',     val: function(data, key) { return data.cy; } },{
+  id: 'x',      val: function(data, key) { return data.x; } },{
+  id: 'y',      val: function(data, key) { return data.y; } },{
+  id: 'width',  val: function(data, key) { return data.width; } },{
+  id: 'height', val: function(data, key) { return data.height; } },];
+
 function vectic(vecticParams) {
   vecticParams = vecticParams || {};
   var _vectic = this;
   _vectic.id = vecticParams.id;
   _vectic.type = vecticParams.type || 'vectic';
+
+  // TODO: Use dataWrapper?
+  _vectic.rootID = 'v'+this.vecticID+'_id'+(_vecticUID+=1);
   _vectic.rootElementId = null;
   _vectic.targetObject = vecticParams.target;
+
+  _vectic.objectContainerDom = null;          // Vectic DOM object (set in _vectic.getDoms)
+  _vectic.templateContainerDom = null;        // Vectic DOM object (set in _vectic.getDoms)
+  _vectic.paletteContainerDom = null;         // Vectic DOM object (set in _vectic.getDoms)
+  _vectic.templateEditContainerDom = null;    // Vectic DOM object (set in _vectic.getDoms)
 
   _vectic.Firebase = Firebase;
   if(!_vectic.Firebase) { return console.error('vectic(): could not find Firebase library'); }
@@ -58,15 +82,16 @@ function vectic(vecticParams) {
     console.log('_vectic.initHTML')
     if(!_vectic.targetObject) {return console.error('vectic: Target object missing');}
     _vectic.targetObject.html(_htmlBoiler.replace('{{ROOTID}}', _vectic.rootID));
+    // TODO: replace w=this with the dataWrapper?
     _vectic.targetObjectSvg = ($(_vectic.targetObject)).find('svg').get(0);
   };
 
   _vectic.getDoms = function() {
     console.log('_vectic.getDoms')
-    _vectic.objectContainerDom = $('svg#'+_vectic.rootID+' g#objects').get(0);
-    _vectic.templateContainerDom = $('svg#'+_vectic.rootID+' defs#templates').get(0);
-    _vectic.paletteContainerDom = $('svg#'+_vectic.rootID+' defs#palettes').get(0);
-    _vectic.templateEditContainerDom = $('svg#'+_vectic.rootID+' g#templates_edit').get(0);
+    _vectic.objectContainerDom        = $('svg#'+_vectic.rootID+' g#objects').get(0);
+    _vectic.templateContainerDom      = $('svg#'+_vectic.rootID+' defs#templates').get(0);
+    _vectic.paletteContainerDom       = $('svg#'+_vectic.rootID+' defs#palettes').get(0);
+    _vectic.templateEditContainerDom  = $('svg#'+_vectic.rootID+' g#templates_edit').get(0);
   };
 
   _vectic.dataWrapper = function(dataWrapperParams) {
@@ -75,75 +100,66 @@ function vectic(vecticParams) {
 
     _dataWrapper.id = dataWrapperParams.id;
     _dataWrapper.type = dataWrapperParams.type;
-    _dataWrapper.rootElementId = _vectic.rootElementId;
     _dataWrapper.elementId = null;      // HTML DOM Object ID
     _dataWrapper.element = null         // HTML DOM Object (JQuery)
     _dataWrapper.ref = null;            // Firebase connection reference
     _dataWrapper.val = null;            // Snapshot data
-
-    // Wrong, without angularfire we can't do this. Need to update .val on('value') changes
-    // Object.defineProperty(_dataWrapper, 'val', {
-    //   get: function() {
-    //     if(_dataWrapper.ref) { return _dataWrapper.ref.val(); }
-    //   },
-    // });
-
-    _dataWrapper.setVal = function(data) {
-      _dataWrapper.val = data;
-    };
 
     _dataWrapper.redraw = function() {
       if(!_dataWrapper.val) {
         console.error('_dataWrapper.redraw(): no val available');
       }
       
+      var newElement = null;
       // TODO: Create DOM Object
       switch(_dataWrapper.type) {
         case 'vectic':
           // TODO:
           break;
         case 'template':
-          var newElement = document.createElementNS('http://www.w3.org/2000/svg', ('def'));
-          if(_dataWrapper.element) { _dataWrapper.element.replaceWith(newElement); }
-          else { /* TODO: Attach to parent object */ }
-          _dataWrapper.element = newElement;
+          newElement = document.createElementNS('http://www.w3.org/2000/svg', ('def'));
+          if(_dataWrapper.element) {
+            // TODO: copy existing internal content to new newElement content
+          }
           break;
         case 'palette':
           // TODO:
           break;
         case 'object':
-          var newElement = document.createElementNS('http://www.w3.org/2000/svg', ('use'));
-          if(_dataWrapper.element) { _dataWrapper.element.replaceWith(newElement); }
-          else { /* TODO: Attach to parent object */ }
-          _dataWrapper.element = newElement;
+          newElement = document.createElementNS('http://www.w3.org/2000/svg', ('use'));
+          if(_dataWrapper.element) {
+            // TODO: copy existing internal content to new newElement content
+          }
           // TODO:
           break;
       }
 
-      // TODO: Attach attributes to DOM Object
+      // TODO: ^ Above: Add default behaviour (exit without redrawing with error)
 
       // TODO: Insert inner text from _dataWrapper.val
 
-      // TODO: Append child elements from _dataWrapper.element if available
+      // TODO: Apply attributes from _dataWrapper.val
 
       // TODO: DOM Object to corresponding container DOM element (which triggers html redraw)
       switch(_dataWrapper.type) {
         case 'vectic':
           // TODO:
-          // $(templateEdit).append(output);
           break;
         case 'template':
-          // TODO:
-          // $(templateEdit).append(output);
+          if(_dataWrapper.element) { _dataWrapper.element.replaceWith(newElement); }      // Replace existing element
+          else if(_vectic.templateContainerDom) { _vectic.templateContainerDom.append(newElement); }    // Append new object
+          else { console.error('_dataWrapper.redraw(): type="'+_dataWrapper.type+'": nowhere to draw'); }
+          _dataWrapper.element = newElement;
           break;
         case 'palette':
           // TODO:
-          // $(templateEdit).append(output);
           break;
         case 'object':
-          _dataWrapper.element = document.createElementNS('http://www.w3.org/2000/svg', ('use'));
+          if(_dataWrapper.element) { _dataWrapper.element.replaceWith(newElement); }      // Replace existing element
+          else if(_vectic.objectContainerDom) { _vectic.objectContainerDom.append(newElement); }    // Append new object
+          else { console.error('_dataWrapper.redraw(): type="'+_dataWrapper.type+'": nowhere to draw'); }
+          _dataWrapper.element = newElement;
           // TODO:
-          // $(templateEdit).append(output);
           break;
       }
     }
@@ -173,7 +189,7 @@ function vectic(vecticParams) {
       _dataWrapper.ref = _vectic.firebaseRef.child(_dataWrapper.path);
 
       _dataWrapper.ref.on('value', function(snapshot) {
-        _dataWrapper.setVal(snapshot);
+        _dataWrapper.val = snapshot;
         _dataWrapper.redraw();
       });
     }
