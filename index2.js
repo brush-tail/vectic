@@ -259,8 +259,8 @@ function vectic(vecticParams) {
     if(_vectic.id) {
       // TODO: 
       var newWrapper = new _vectic.dataWrapper({
-        id: _vectic.id,
-        type: 'vectic',
+        id:   _vectic.id,
+        type: _vectic.type,
       });
     }
 
